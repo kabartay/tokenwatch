@@ -1,12 +1,14 @@
 /**
- * @file Renders a {@link UsageState} into a VS Code status bar item.
+ * @file Renders quota and context into a single status bar item, one line.
  *
  * The status bar can only show text, codicons, a foreground colour and two background
  * colours (warning, error), so bars are drawn with Unicode and urgency maps onto those colours.
+ * Quota and context are polled independently (different sources, different intervals), so
+ * each is set separately and the item is repainted from whichever was set last of each kind.
  */
 
 import * as vscode from 'vscode';
-import { formatCountdown, formatPercent, formatTokens } from '../core/format';
+import { formatCountdown, formatPercent, formatTokens, formatTokensRounded } from '../core/format';
 import {
   assess,
   describePace,
@@ -16,14 +18,18 @@ import {
   type AlertLevel,
   type WindowName,
 } from '../core/insights';
+import type { ContextReading } from '../core/contextUsage';
 import type { TokenwatchConfig, UsageSnapshot, UsageState, UsageWindow } from '../core/types';
 import { DEFAULT_CONFIG } from './config';
 
 /** Segments in the status bar bar; the tooltip uses a wider one. */
 const STATUS_BAR_SEGMENTS = 5;
 const TOOLTIP_SEGMENTS = 10;
+/** Context colour thresholds; Claude Code starts compacting as the window fills. */
+const CONTEXT_WATCH_PERCENT = 70;
+const CONTEXT_WARN_PERCENT = 90;
 
-/** Leading icon per alert level. */
+/** Leading icon per quota alert level. */
 const LEVEL_ICON: Record<AlertLevel, string> = {
   ok: '$(pulse)',
   watch: '$(pulse)',
@@ -31,9 +37,12 @@ const LEVEL_ICON: Record<AlertLevel, string> = {
   critical: '$(error)',
 };
 
-/** Owns the status bar item; stateless apart from it, so any state can be rendered at any time. */
+/** One status bar item combining quota and context into a single line. */
 export class UsageStatusBar implements vscode.Disposable {
   private readonly item: vscode.StatusBarItem;
+  private state: UsageState = { kind: 'loading' };
+  private config: TokenwatchConfig = DEFAULT_CONFIG;
+  private context: ContextReading | undefined;
 
   /** @param clickCommand - Command run when the item is clicked. */
   constructor(clickCommand: vscode.Command) {
@@ -44,97 +53,130 @@ export class UsageStatusBar implements vscode.Disposable {
     );
     this.item.name = 'Tokenwatch';
     this.item.command = clickCommand;
-    this.render({ kind: 'loading' }, DEFAULT_CONFIG);
+    this.repaint();
     this.item.show();
   }
 
   /**
-   * Updates text, tooltip and colour to reflect `state`.
+   * Updates the quota half of the line.
    *
-   * @param state - Outcome of the latest refresh.
+   * @param state - Outcome of the latest quota refresh.
    * @param config - Current settings (threshold and display style).
    */
   render(state: UsageState, config: TokenwatchConfig): void {
-    this.item.backgroundColor = undefined;
-    this.item.color = undefined;
-    switch (state.kind) {
-      case 'loading':
-        this.item.text = '$(sync~spin) Claude';
-        this.item.tooltip = 'Tokenwatch: fetching usage…';
-        return;
-      case 'noCredentials':
-        this.item.text = '$(account) Claude: log in';
-        this.item.tooltip = markdown(
-          'No Claude Code login found (macOS Keychain item `Claude Code-credentials` or ' +
-            '`~/.claude/.credentials.json`).\n\nRun `claude`, log in, then click to refresh.',
-        );
-        return;
-      case 'live':
-        this.renderLive(state.snapshot, state.fetchedAt, config);
-        return;
-      case 'fallback':
-        this.item.text = `$(graph-line) ~${formatTokens(state.estimate.tokensToday)} tok today`;
-        this.item.tooltip = markdown(
-          `**Live quota unavailable** — ${escape(state.reason)}\n\n` +
-            `Showing tokens logged locally today across ${state.estimate.messageCount} ` +
-            'messages. This is consumption, not remaining quota.\n\nClick to retry.',
-        );
-        return;
-      case 'error':
-        this.item.text = '$(error) Claude usage';
-        this.item.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
-        this.item.tooltip = markdown(`**Tokenwatch error** — ${escape(state.message)}\n\nClick to retry.`);
-        return;
-    }
+    this.state = state;
+    this.config = config;
+    this.repaint();
+  }
+
+  /**
+   * Updates the context half of the line.
+   *
+   * @param context - Latest reading, or `undefined` to drop the segment (no session, or
+   *   `tokenwatch.showContext` is off).
+   */
+  setContext(context: ContextReading | undefined): void {
+    this.context = context;
+    this.repaint();
   }
 
   dispose(): void {
     this.item.dispose();
   }
 
-  private renderLive(snapshot: UsageSnapshot, fetchedAt: Date, config: TokenwatchConfig): void {
+  private repaint(): void {
+    const quota = this.renderQuota();
+    const contextText = this.context ? `ctx: ${formatPercent(this.context.percent)}` : undefined;
+    this.item.text = contextText ? `${quota.text} · ${contextText}` : quota.text;
+    this.item.tooltip = combinedTooltip(quota.tooltip, this.context);
+
+    // Context's own warning never outranks a quota warning; quota is the more urgent signal.
+    const contextLevel = this.contextLevel();
+    this.item.backgroundColor = quota.backgroundColor ?? contextLevel.backgroundColor;
+    this.item.color = quota.color ?? contextLevel.color;
+  }
+
+  private contextLevel(): Partial<Pick<vscode.StatusBarItem, 'color' | 'backgroundColor'>> {
+    if (!this.context) return {};
+    if (this.context.percent >= CONTEXT_WARN_PERCENT) {
+      return { backgroundColor: new vscode.ThemeColor('statusBarItem.warningBackground') };
+    }
+    if (this.context.percent >= CONTEXT_WATCH_PERCENT) {
+      return { color: new vscode.ThemeColor('charts.yellow') };
+    }
+    return {};
+  }
+
+  private renderQuota(): {
+    text: string;
+    tooltip: string;
+    color?: vscode.ThemeColor;
+    backgroundColor?: vscode.ThemeColor;
+  } {
+    const state = this.state;
+    switch (state.kind) {
+      case 'loading':
+        return { text: '$(sync~spin) Claude', tooltip: 'Tokenwatch: fetching usage…' };
+      case 'noCredentials':
+        return {
+          text: '$(account) Claude: log in',
+          tooltip:
+            'No Claude Code login found (macOS Keychain item `Claude Code-credentials` or ' +
+            '`~/.claude/.credentials.json`).\n\nRun `claude`, log in, then click to refresh.',
+        };
+      case 'live':
+        return this.renderLive(state.snapshot, state.fetchedAt);
+      case 'fallback':
+        return {
+          text: `$(graph-line) ~${formatTokens(state.estimate.tokensToday)} tok today`,
+          tooltip:
+            `**Live quota unavailable** — ${escape(state.reason)}\n\n` +
+            `Showing tokens logged locally today across ${state.estimate.messageCount} ` +
+            'messages. This is consumption, not remaining quota.\n\nClick to retry.',
+        };
+      case 'error':
+        return {
+          text: '$(error) Claude usage',
+          backgroundColor: new vscode.ThemeColor('statusBarItem.errorBackground'),
+          tooltip: `**Tokenwatch error** — ${escape(state.message)}\n\nClick to retry.`,
+        };
+    }
+  }
+
+  private renderLive(
+    snapshot: UsageSnapshot,
+    fetchedAt: Date,
+  ): { text: string; tooltip: string; color?: vscode.ThemeColor; backgroundColor?: vscode.ThemeColor } {
     const now = new Date();
-    const { level, reason } = assess(snapshot, config.warnThresholdPercent, now);
+    const { level, reason } = assess(snapshot, this.config.warnThresholdPercent, now);
     const { session, weekly } = snapshot;
 
     const part = (label: string, window: UsageWindow | undefined) =>
-      config.statusBarStyle === 'bars' && window
+      this.config.statusBarStyle === 'bars' && window
         ? `${label} ${progressBar(window.percentUsed, STATUS_BAR_SEGMENTS)} ${formatPercent(window.percentUsed)}`
         : `${label} ${formatPercent(window?.percentUsed)}`;
     const countdown =
-      config.showResetCountdown && session?.resetsAt ? ` ${formatCountdown(session.resetsAt, now)}` : '';
-    this.item.text = `${LEVEL_ICON[level]} ${part('5h', session)}${countdown} · ${part('wk', weekly)}`;
+      this.config.showResetCountdown && session?.resetsAt ? ` ${formatCountdown(session.resetsAt, now)}` : '';
+    const text = `${LEVEL_ICON[level]} ${part('5h', session)}${countdown} · ${part('wk', weekly)}`;
 
-    this.applyLevel(level);
-    this.item.tooltip = markdown(
-      [
-        level === 'ok' ? '**Claude usage**' : `**Claude usage** · ${LEVEL_ICON[level]} ${reason ?? ''}`,
-        '',
-        '| | Used | | Pace | Resets |',
-        '| :-- | :-- | --: | :-- | :-- |',
-        tooltipRow('session', '5h session', session, now),
-        tooltipRow('weekly', 'Weekly', weekly, now),
-        '',
-        `Updated ${fetchedAt.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} · click to refresh`,
-      ].join('\n'),
-    );
-  }
+    const tooltip = [
+      level === 'ok' ? '**Claude usage**' : `**Claude usage** · ${LEVEL_ICON[level]} ${reason ?? ''}`,
+      '',
+      '| | Used | | Pace | Resets |',
+      '| :-- | :-- | --: | :-- | :-- |',
+      tooltipRow('session', '5h session', session, now),
+      tooltipRow('weekly', 'Weekly', weekly, now),
+      '',
+      `Updated ${fetchedAt.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} · click to refresh`,
+    ].join('\n');
 
-  private applyLevel(level: AlertLevel): void {
-    switch (level) {
-      case 'critical':
-        this.item.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
-        return;
-      case 'warn':
-        this.item.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
-        return;
-      case 'watch':
-        // Background colours are limited to warning/error, so the early heads-up is a tint.
-        this.item.color = new vscode.ThemeColor('charts.yellow');
-        return;
-      case 'ok':
-        return;
-    }
+    let color: vscode.ThemeColor | undefined;
+    let backgroundColor: vscode.ThemeColor | undefined;
+    if (level === 'critical') backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+    else if (level === 'warn') backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+    else if (level === 'watch') color = new vscode.ThemeColor('charts.yellow');
+
+    return { text, tooltip, color, backgroundColor };
   }
 }
 
@@ -155,8 +197,24 @@ function formatResetTime(name: WindowName, at: Date): string {
     : at.toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-function markdown(text: string): vscode.MarkdownString {
-  const md = new vscode.MarkdownString(text);
+function combinedTooltip(quotaMarkdown: string, context: ContextReading | undefined): vscode.MarkdownString {
+  const parts = [quotaMarkdown];
+  if (context) {
+    const pct = formatPercent(context.percent);
+    parts.push(
+      [
+        '---',
+        '**Claude context** · this workspace',
+        '',
+        `\`${progressBar(context.percent, TOOLTIP_SEGMENTS)}\` **${pct}** · ` +
+          `${formatTokensRounded(context.tokens)} of ${formatTokensRounded(context.windowTokens)} tokens`,
+        '',
+        `${context.model ?? 'unknown model'} · last reply ` +
+          context.at.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
+      ].join('\n'),
+    );
+  }
+  const md = new vscode.MarkdownString(parts.join('\n\n'));
   md.supportThemeIcons = true;
   return md;
 }

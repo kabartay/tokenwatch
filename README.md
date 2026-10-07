@@ -20,7 +20,7 @@
 </p>
 
 ```
-5h ▰▱▱▱▱ 9% ↻4h 8m · wk ▰▰▱▱▱ 41%
+5h ▰▱▱▱▱ 9% ↻4h 8m · wk ▰▰▱▱▱ 41% · ctx: 29%
 ```
 
 ## Features
@@ -30,8 +30,8 @@
 - **Reset countdown** right in the status bar: `↻4h 8m` until the 5-hour session resets.
 - **Pace projection.** The tooltip shows where each window is heading at your pace so far:
   "~45% at reset", or "runs out in 1h 20m" if you'll hit the limit first.
-- **Context size**: a second item, `ctx ▰▰▱▱▱ 29%`, shows how full the context window is in
-  the latest Claude Code session started in this window's folder, like `/context`.
+- **Context size**: `· ctx: 29%` appended to the same line, showing how full the context
+  window is in the latest Claude Code session started in this window's folder, like `/context`.
 - **Warnings before it's too late.** The text turns **yellow** when you're on pace to run out
   before the reset, the item turns **amber** at your threshold or when the limit is under an
   hour away, and **red** at 100%.
@@ -59,8 +59,8 @@ The item sits at the right end of the status bar and refreshes every 60 seconds.
 
 | Shows | Meaning |
 | --- | --- |
-| `5h ▰▱▱▱▱ 9% ↻4h 8m · wk ▰▰▱▱▱ 41%` | Live quota: share used of the 5-hour session (resetting in 4h 8m) and of the week. |
-| `ctx ▰▱▱▱▱ 29%` | Context window used by this folder's latest Claude session. Yellow from 70%, amber from 90%. Hidden when there's no session. |
+| `5h ▰▱▱▱▱ 9% ↻4h 8m · wk ▰▰▱▱▱ 41% · ctx: 29%` | Live quota: share used of the 5-hour session (resetting in 4h 8m) and of the week. |
+| `· ctx: 29%` | Context window used by this folder's latest Claude session, appended to the quota text. Yellow from 70%, amber from 90%. Omitted when there's no session. |
 | `~1.2M tok today` | Live quota unavailable. Shows tokens logged locally today, and the tooltip says why. |
 | `Claude: log in` | No Claude Code login found. Run `claude` and log in. |
 | `Claude usage` in red | Nothing worked. The tooltip has the error. |
@@ -91,7 +91,7 @@ flowchart LR
   K["Claude Code login<br/><sub>Keychain · ~/.claude/.credentials.json</sub>"]
   API["api.anthropic.com<br/><sub>/api/oauth/usage</sub>"]
   LOGS["Local session logs<br/><sub>~/.claude/projects/**/*.jsonl</sub>"]
-  SB["Status bar<br/><sub>5h ▰▱▱▱▱ 9% ↻4h 8m · wk ▰▰▱▱▱ 41%</sub>"]
+  SB["Status bar<br/><sub>5h ▰▱▱▱▱ 9% ↻4h 8m · wk ▰▰▱▱▱ 41% · ctx: 29%</sub>"]
 
   K -->|access token| API
   API -->|five_hour · seven_day| SB

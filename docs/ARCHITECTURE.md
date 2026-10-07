@@ -101,8 +101,11 @@ Transcripts record the model but not its window size, so `windowFor()` takes it 
 `tokenwatch.contextWindowTokens` (exact id, longest prefix, then `"*"`). Otherwise it infers
 200k, or 1M once the session has grown past 200k, which only a 1M window allows.
 
-It's a separate status bar item because quota belongs to the account while context belongs to
-one session. Users can hide either one from the status bar menu.
+Quota and context are polled independently — different sources, different rates (60s vs 15s)
+— but rendered as one line by `UsageStatusBar`: `ContextMonitor` has no status bar item of its
+own, it calls `statusBar.setContext(reading)` and `UsageStatusBar` repaints from whichever of
+quota or context was set most recently. Quota's alert colour always wins over context's,
+since quota (you're about to be rate-limited) is the more urgent signal.
 
 ## Design decisions
 

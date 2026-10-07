@@ -1,0 +1,28 @@
+name: Bug report
+description: Tokenwatch shows the wrong thing, or nothing
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Tokenwatch and VS Code versions
+      placeholder: Tokenwatch 0.2.1, VS Code 1.105, macOS 26
+    validations:
+      required: true
+  - type: textarea
+    id: shown
+    attributes:
+      label: What the status bar shows
+      description: The item's text and its tooltip, or a screenshot.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Tokenwatch log
+      description: |
+        Run **Tokenwatch: Show Log** and paste the last few lines. The log never contains your token,
+        but an "Unrecognised usage response" line includes the endpoint's reply, so check it before posting.
+      render: text
+    validations:
+      required: true

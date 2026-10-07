@@ -8,6 +8,7 @@
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import type { UsageEstimator } from './contracts';
 import type { LocalUsageEstimate } from './types';
 
 /** Bytes read per `read()` call while scanning a log file. */
@@ -21,7 +22,7 @@ const NEWLINE = 0x0a;
  * so the estimator is incremental: it remembers how far it has read in each file and only
  * parses the newly appended tail on later calls. State resets at local midnight.
  */
-export class LocalUsageEstimator {
+export class LocalUsageEstimator implements UsageEstimator {
   private dayStartMs = -1;
   private readonly offsets = new Map<string, number>();
   private readonly seen = new Map<string, number>();
@@ -173,8 +174,9 @@ export function tokenUsageOf(
 
   const input = typeof usage.input_tokens === 'number' ? usage.input_tokens : 0;
   const output = typeof usage.output_tokens === 'number' ? usage.output_tokens : 0;
-  const requestId = String(e.requestId ?? '');
-  // Without a message id, fall back to the timestamp so distinct entries never collapse.
-  const messageKey = e.message?.id ? String(e.message.id) : `ts:${e.timestamp}`;
+  const requestId = typeof e.requestId === 'string' ? e.requestId : '';
+  // Without a string message id, fall back to the timestamp so distinct entries never collapse.
+  const messageId = e.message?.id;
+  const messageKey = typeof messageId === 'string' && messageId ? messageId : `ts:${e.timestamp}`;
   return { key: `${messageKey}:${requestId}`, tokens: input + output };
 }

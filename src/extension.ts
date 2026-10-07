@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import { CredentialStore } from './core/credentials';
 import { LocalUsageEstimator } from './core/localUsage';
 import { UsageApiClient } from './core/usageApi';
+import { UsageService } from './core/usageService';
 import { UsageController } from './vscode/controller';
 import { UsageStatusBar } from './vscode/statusBar';
 
@@ -22,14 +23,18 @@ interface RefreshArgs {
 /** Called by VS Code once startup has finished (`onStartupFinished`). */
 export function activate(context: vscode.ExtensionContext): void {
   const log = vscode.window.createOutputChannel('Tokenwatch', { log: true });
-  const statusBar = new UsageStatusBar({ command: REFRESH_COMMAND, title: 'Refresh', arguments: [{ quiet: true }] });
-  const controller = new UsageController({
+  const statusBar = new UsageStatusBar({
+    command: REFRESH_COMMAND,
+    title: 'Refresh',
+    arguments: [{ quiet: true } satisfies RefreshArgs],
+  });
+  const service = new UsageService({
     credentials: CredentialStore.forPlatform(),
     api: new UsageApiClient(),
-    localEstimator: new LocalUsageEstimator(),
-    statusBar,
+    estimator: new LocalUsageEstimator(),
     log,
   });
+  const controller = new UsageController({ service, statusBar, log });
 
   context.subscriptions.push(
     log,
@@ -40,7 +45,8 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
     vscode.commands.registerCommand(SHOW_LOG_COMMAND, () => log.show()),
   );
-  log.info(`Tokenwatch ${String(context.extension.packageJSON.version)} activated`);
+  const { version } = context.extension.packageJSON as { version: string };
+  log.info(`Tokenwatch ${version} activated`);
   controller.start();
 }
 

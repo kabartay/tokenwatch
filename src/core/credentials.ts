@@ -9,6 +9,7 @@ import { execFile } from 'child_process';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import type { AccessTokenProvider } from './contracts';
 
 /** A place a Claude Code access token may be stored. */
 export interface TokenSource {
@@ -93,7 +94,7 @@ function pick(obj: unknown, key: string): unknown {
 }
 
 /** Tries each {@link TokenSource} in order and returns the first usable token. */
-export class CredentialStore {
+export class CredentialStore implements AccessTokenProvider {
   /** @param sources - Sources in priority order. */
   constructor(private readonly sources: readonly TokenSource[]) {}
 

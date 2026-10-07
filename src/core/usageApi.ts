@@ -1,16 +1,24 @@
 /**
  * @file Client for the server-side usage endpoint that Claude Code's `/usage` reads.
  *
- * The endpoint is undocumented. The response shape assumed here,
- * `{"five_hour": {"utilization": 42, "resets_at": "<ISO>"}, "seven_day": {...}}`, follows
- * community-documented usage of it; the parser also tolerates a few plausible renames and
- * keeps the raw body so an unexpected shape degrades to the local fallback instead of
- * showing wrong numbers.
+ * The endpoint is undocumented. Its response shape,
+ * `{"five_hour": {"utilization": 42, "resets_at": "<ISO>"}, "seven_day": {...}}`, was
+ * confirmed against a live account on 2026-10-07 (see docs/USAGE_ENDPOINT.md). The parser
+ * also tolerates a few plausible renames and keeps the raw body, so a future change degrades
+ * to the local fallback instead of showing wrong numbers.
  */
 
+import type { ClientRequest, IncomingMessage, RequestOptions } from 'http';
 import * as https from 'https';
+import type { UsageFetcher } from './contracts';
 import { UsageApiError } from './errors';
 import type { UsageSnapshot, UsageWindow } from './types';
+
+/** Signature shared by `https.request` and `http.request`. */
+export type RequestFn = (
+  options: RequestOptions,
+  callback: (res: IncomingMessage) => void,
+) => ClientRequest;
 
 const SESSION_KEYS = ['five_hour', 'fiveHour', 'session'] as const;
 const WEEKLY_KEYS = ['seven_day', 'sevenDay', 'weekly'] as const;
@@ -20,10 +28,17 @@ const RESET_KEYS = ['resets_at', 'resetsAt', 'reset_at'] as const;
 /** Connection settings for {@link UsageApiClient}. */
 export interface UsageApiOptions {
   readonly hostname: string;
+  /** Omitted in production (443); set by tests that run a local server. */
+  readonly port?: number;
   readonly path: string;
   /** Value of the `anthropic-beta` header the OAuth endpoints require. */
   readonly betaHeader: string;
   readonly timeoutMs: number;
+  /**
+   * Transport. Defaults to `https.request`, which VS Code patches to honour the user's
+   * `http.proxy` setting (global `fetch` is not patched). Tests substitute `http.request`.
+   */
+  readonly request: RequestFn;
 }
 
 const DEFAULT_OPTIONS: UsageApiOptions = {
@@ -31,10 +46,11 @@ const DEFAULT_OPTIONS: UsageApiOptions = {
   path: '/api/oauth/usage',
   betaHeader: 'oauth-2025-04-20',
   timeoutMs: 10_000,
+  request: https.request,
 };
 
 /** Fetches and parses the account's quota utilization. */
-export class UsageApiClient {
+export class UsageApiClient implements UsageFetcher {
   private readonly options: UsageApiOptions;
 
   /** @param options - Overrides for the default endpoint settings. */
@@ -45,19 +61,18 @@ export class UsageApiClient {
   /**
    * Requests the current usage.
    *
-   * Uses Node's `https` module rather than `fetch` because VS Code patches `https` to honour
-   * the user's `http.proxy` setting.
-   *
    * @param accessToken - Claude Code OAuth access token; sent only to the configured host.
    * @returns The parsed snapshot. Windows the parser didn't recognise are left undefined.
    * @throws {UsageApiError} On network failure, timeout, non-2xx status, or invalid JSON.
+   *   Its message never contains the token.
    */
   fetchUsage(accessToken: string): Promise<UsageSnapshot> {
-    const { hostname, path, betaHeader, timeoutMs } = this.options;
+    const { hostname, port, path, betaHeader, timeoutMs, request } = this.options;
     return new Promise((resolve, reject) => {
-      const req = https.request(
+      const req = request(
         {
           hostname,
+          port,
           path,
           method: 'GET',
           timeout: timeoutMs,
@@ -65,6 +80,7 @@ export class UsageApiClient {
             Authorization: `Bearer ${accessToken}`,
             Accept: 'application/json',
             'anthropic-beta': betaHeader,
+            'User-Agent': 'tokenwatch',
           },
         },
         (res) => {

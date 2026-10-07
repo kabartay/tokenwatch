@@ -1,29 +1,26 @@
 /**
- * @file Orchestrates polling: credentials → usage endpoint → local fallback → status bar.
+ * @file Schedules refreshes and keeps the status bar in sync with settings and focus.
+ *
+ * What to display is decided by {@link UsageService}; this class only decides *when*.
  */
 
 import * as vscode from 'vscode';
-import type { CredentialStore } from '../core/credentials';
-import { UsageApiError } from '../core/errors';
-import type { LocalUsageEstimator } from '../core/localUsage';
 import { summarizeState } from '../core/format';
-import { hasAnyWindow, type UsageApiClient } from '../core/usageApi';
+import type { UsageService } from '../core/usageService';
 import type { TokenwatchConfig, UsageState } from '../core/types';
 import { CONFIG_SECTION, readConfig } from './config';
 import type { UsageStatusBar } from './statusBar';
 
-/** Collaborators of {@link UsageController}, injected so each can be replaced in tests. */
+/** Collaborators of {@link UsageController}. */
 export interface UsageControllerDeps {
-  readonly credentials: CredentialStore;
-  readonly api: UsageApiClient;
-  readonly localEstimator: LocalUsageEstimator;
+  readonly service: UsageService;
   readonly statusBar: UsageStatusBar;
   /** Diagnostics sink; never receives the access token. */
   readonly log: vscode.LogOutputChannel;
 }
 
 /**
- * Drives periodic refreshes and keeps the status bar in sync with settings.
+ * Drives periodic refreshes.
  *
  * Every VS Code window runs its own extension host, so unfocused windows skip their polls
  * and catch up when focused; with several windows open the endpoint is still hit roughly
@@ -77,9 +74,13 @@ export class UsageController implements vscode.Disposable {
     this.deps.statusBar.render({ kind: 'loading' }, this.config);
     await this.refresh();
     if (!notify) return;
+
     const message = `Tokenwatch: ${summarizeState(this.state)}`;
-    const show = this.state.kind === 'live' ? vscode.window.showInformationMessage : vscode.window.showWarningMessage;
-    if ((await show(message, 'Show Log')) === 'Show Log') this.deps.log.show();
+    const choice =
+      this.state.kind === 'live'
+        ? await vscode.window.showInformationMessage(message, 'Show Log')
+        : await vscode.window.showWarningMessage(message, 'Show Log');
+    if (choice === 'Show Log') this.deps.log.show();
   }
 
   dispose(): void {
@@ -88,35 +89,14 @@ export class UsageController implements vscode.Disposable {
   }
 
   private async doRefresh(): Promise<void> {
-    const state = await this.computeState();
-    this.deps.log.info(summarizeState(state));
-    this.setState(state);
-  }
-
-  private async computeState(): Promise<UsageState> {
-    const { log } = this.deps;
-    const token = await this.deps.credentials.getAccessToken();
-    if (!token) {
-      log.warn('No access token in the macOS Keychain or ~/.claude/.credentials.json');
-      return { kind: 'noCredentials' };
-    }
-
-    let reason: string;
+    let state: UsageState;
     try {
-      const snapshot = await this.deps.api.fetchUsage(token);
-      if (hasAnyWindow(snapshot)) return { kind: 'live', snapshot, fetchedAt: new Date() };
-      reason = 'usage endpoint returned an unrecognised response';
-      log.warn(`Unrecognised usage response: ${JSON.stringify(snapshot.raw).slice(0, 1_000)}`);
+      state = await this.deps.service.resolve();
     } catch (err) {
-      reason = describeFailure(err);
-      log.warn(`Usage request failed: ${err instanceof Error ? err.message : String(err)}`);
+      // The service handles expected failures; this guards against bugs leaving a stale item.
+      state = { kind: 'error', message: err instanceof Error ? err.message : String(err) };
     }
-
-    const estimate = await this.deps.localEstimator.estimateToday();
-    return estimate ? { kind: 'fallback', estimate, reason } : { kind: 'error', message: reason };
-  }
-
-  private setState(state: UsageState): void {
+    this.deps.log.info(summarizeState(state));
     this.state = state;
     this.deps.statusBar.render(state, this.config);
   }
@@ -137,14 +117,4 @@ export class UsageController implements vscode.Disposable {
   private isStale(): boolean {
     return Date.now() - this.lastRefreshAt >= this.config.pollIntervalSeconds * 1_000;
   }
-}
-
-/** Turns a refresh failure into a short, token-free message for the tooltip. */
-function describeFailure(err: unknown): string {
-  if (err instanceof UsageApiError) {
-    if (err.isAuthFailure) return 'login rejected — run `claude` to refresh it';
-    if (err.status === 429) return 'rate-limited by the usage endpoint';
-    return err.message;
-  }
-  return err instanceof Error ? err.message : String(err);
 }

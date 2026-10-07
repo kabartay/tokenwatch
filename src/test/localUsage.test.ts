@@ -95,6 +95,18 @@ describe('tokenUsageOf', () => {
     assert.equal(tokenUsageOf(null, since), undefined);
   });
 
+  it('does not collapse entries whose ids are not strings', () => {
+    const entry = (ts: string) => ({
+      timestamp: ts,
+      requestId: { nested: true },
+      message: { id: { nested: true }, usage: { input_tokens: 1 } },
+    });
+    const a = tokenUsageOf(entry(TODAY), since);
+    const b = tokenUsageOf(entry(new Date(2026, 9, 7, 11).toISOString()), since);
+    assert.ok(a && b);
+    assert.notEqual(a.key, b.key);
+  });
+
   it('keys id-less entries by timestamp so they never collapse together', () => {
     const a = tokenUsageOf({ timestamp: TODAY, message: { usage: { input_tokens: 1 } } }, since);
     const b = tokenUsageOf(

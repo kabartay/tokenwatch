@@ -4,6 +4,11 @@
   "description": "Claude Code session and weekly usage quota, live in the VS Code status bar.",
   "version": "0.2.1",
   "publisher": "kabartay",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1C1F26",
+    "theme": "dark"
+  },
   "private": true,
   "license": "MIT",
   "repository": {
@@ -69,14 +74,20 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "typecheck": "tsc --noEmit -p ./",
+    "lint": "eslint .",
     "test": "npm run compile && node --test \"out/test/**/*.test.js\"",
+    "test:coverage": "npm run compile && node --test --experimental-test-coverage --test-coverage-exclude=\"out/test/**\" \"out/test/**/*.test.js\"",
+    "check": "npm run typecheck && npm run lint && npm test",
     "package": "vsce package",
     "vscode:prepublish": "rm -rf out && npm run compile"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/node": "^20.0.0",
     "@types/vscode": "~1.85.0",
     "@vscode/vsce": "^2.24.0",
-    "typescript": "^5.4.0"
+    "eslint": "^9.39.5",
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.71.1"
   }
 }

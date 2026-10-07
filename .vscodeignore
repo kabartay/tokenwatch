@@ -1,11 +1,15 @@
 .vscode/**
 .github/**
+docs/**
 src/**
 out/test/**
 **/*.map
 **/*.ts
 node_modules/**
+.editorconfig
 .gitignore
+eslint.config.mjs
 tsconfig.json
 install.sh
+SECURITY.md
 *.vsix

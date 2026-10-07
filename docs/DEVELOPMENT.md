@@ -77,10 +77,10 @@ a release.
 2. Bump `version` in `package.json`.
 3. Run `npm run check`, then commit and push to `main`.
 4. Wait for CI to pass.
-5. Tag and push:
+5. Tag the version from `package.json` and push the tag:
 
    ```bash
-   git tag v0.3.0 && git push origin v0.3.0
+   v="v$(node -p "require('./package.json').version")" && git tag "$v" && git push origin "$v"
    ```
 
 6. `release.yml` builds the `.vsix` and creates the GitHub Release. Replace the

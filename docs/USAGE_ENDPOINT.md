@@ -4,7 +4,7 @@ Tokenwatch reads the same data as Claude Code's `/usage` command. The endpoint i
 **undocumented**. This page records what is known about it, so that when it changes the fix
 is quick.
 
-**Last confirmed working:** 2026-10-07, Tokenwatch 0.2.1, macOS.
+**Last confirmed working:** 2026-10-07, Tokenwatch 0.5.1, macOS.
 
 ## Request
 

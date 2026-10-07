@@ -6,7 +6,8 @@ body:
     id: version
     attributes:
       label: Tokenwatch and VS Code versions
-      placeholder: Tokenwatch 0.2.1, VS Code 1.105, macOS 26
+      description: The Tokenwatch version is in the Extensions panel and on the log's first line (`Tokenwatch X.Y.Z activated`).
+      placeholder: Tokenwatch X.Y.Z, VS Code X.Y, macOS / Windows / Linux
     validations:
       required: true
   - type: textarea

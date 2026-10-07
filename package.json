@@ -1,7 +1,7 @@
 {
   "name": "tokenwatch",
   "displayName": "Tokenwatch",
-  "description": "Claude Code session and weekly usage quota, live in the VS Code status bar.",
+  "description": "Live Claude Code quota in your status bar: 5-hour session and weekly usage with reset countdowns.",
   "version": "0.3.0",
   "publisher": "kabartay",
   "icon": "images/icon.png",

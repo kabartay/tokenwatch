@@ -44,7 +44,8 @@ flowchart LR
 | `core/usageApi.ts` | `UsageApiClient` (HTTP) and `parseUsageResponse` (pure). |
 | `core/localUsage.ts` | `LocalUsageEstimator`: incremental scan of session logs. |
 | `core/usageService.ts` | The refresh decision: live, fallback, or error. |
-| `core/format.ts` | Pure formatting: percentages, countdowns, token counts, one-line summaries. |
+| `core/insights.ts` | Pure derived views: progress bars, pace projection, alert level. |
+| `core/format.ts` | Pure formatting: percentages, durations, `↻` countdowns, token counts, one-line summaries. |
 | `vscode/controller.ts` | Polling timer, focus gating, live config reload, manual refresh. |
 | `vscode/statusBar.ts` | Turns a `UsageState` into text, colour and a Markdown tooltip. |
 | `vscode/config.ts` | Reads and clamps `tokenwatch.*` settings. |
@@ -66,6 +67,22 @@ flowchart TD
 
 A missing login skips the fallback on purpose. Showing a token count would hide the one
 problem the user can actually fix.
+
+## Alert levels
+
+`assess()` in `core/insights.ts` turns a snapshot into one of four levels. The status bar can
+only colour text and use two background colours, so each level maps onto one of these:
+
+| Level | When | Shown as |
+| --- | --- | --- |
+| `ok` | Comfortable pace | Default colours |
+| `watch` | At this pace, a window runs out before it resets | Yellow text (`charts.yellow`) |
+| `warn` | A window is past the threshold, or will run out within the hour | Amber background, `$(warning)` |
+| `critical` | A window is at 100% | Red background, `$(error)` |
+
+Pace is the average since the window started: `percentUsed / (now − (resetsAt − length))`.
+That needs no stored samples, so it is correct after a reload. It is suppressed in the
+first 10 minutes of a window, when a single large prompt would distort it.
 
 ## Design decisions
 

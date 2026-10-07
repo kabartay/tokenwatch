@@ -20,19 +20,19 @@
 </p>
 
 ```
-5h 9% · wk 41%
+5h ▰▱▱▱▱ 9% ↻4h 8m · wk ▰▰▱▱▱ 41%
 ```
-
-<p align="center">
-  <img src="docs/images/notification.png" width="560" alt="Notification: Tokenwatch: 5h 9% (resets in 4h 8m) · wk 41%">
-</p>
 
 ## Features
 
-- **Live session (5h) and weekly (7d) quota**, from the same source `/usage` reads.
-- **Reset countdowns**: hover for "resets in 4h 8m" on both windows.
-- **At-a-glance warnings**: the item turns **amber** at your threshold (80% by default) and
-  **red** at 100%.
+- **Live session (5h) and weekly (7d) quota**, from the same source `/usage` reads, with a
+  mini progress bar for each.
+- **Reset countdown** right in the status bar: `↻4h 8m` until the 5-hour session resets.
+- **Pace projection.** The tooltip shows where each window is heading at your pace so far:
+  "~45% at reset", or "runs out in 1h 20m" if you'll hit the limit first.
+- **Warnings before it's too late.** The text turns **yellow** when you're on pace to run out
+  before the reset, the item turns **amber** at your threshold or when the limit is under an
+  hour away, and **red** at 100%.
 - **Zero setup.** Reuses your existing Claude Code login; nothing to paste, no API key.
 - **Graceful fallback.** If live quota is unavailable, it shows today's token count from your
   local session logs, and says why, instead of going stale or showing a wrong number.
@@ -57,12 +57,12 @@ The item sits at the right end of the status bar and refreshes every 60 seconds.
 
 | Shows | Meaning |
 | --- | --- |
-| `5h 9% · wk 41%` | Live quota: percentage used of the 5-hour session and of the week. |
+| `5h ▰▱▱▱▱ 9% ↻4h 8m · wk ▰▰▱▱▱ 41%` | Live quota: share used of the 5-hour session (resetting in 4h 8m) and of the week. |
 | `~1.2M tok today` | Live quota unavailable. Shows tokens logged locally today, and the tooltip says why. |
 | `Claude: log in` | No Claude Code login found. Run `claude` and log in. |
 | `Claude usage` in red | Nothing worked. The tooltip has the error. |
 
-- **Hover** for both windows and their reset times.
+- **Hover** for a table of both windows: usage bar, pace projection and exact reset times.
 - **Click** to refresh now.
 - `Cmd+Shift+P` → **Tokenwatch: Refresh Claude Usage** refreshes and shows the result in a
   notification, which helps if the item is out of view.
@@ -74,6 +74,8 @@ The item sits at the right end of the status bar and refreshes every 60 seconds.
 | --- | --- | --- |
 | `tokenwatch.pollIntervalSeconds` | `60` | Seconds between refreshes (minimum 30). |
 | `tokenwatch.warnThresholdPercent` | `80` | Turn amber at or above this percentage. |
+| `tokenwatch.statusBarStyle` | `bars` | `bars` shows `5h ▰▱▱▱▱ 9%`; `compact` shows `5h 9%`. |
+| `tokenwatch.showResetCountdown` | `true` | Show `↻4h 8m` until the session resets. |
 
 Changes apply immediately, with no reload.
 
@@ -84,7 +86,7 @@ flowchart LR
   K["Claude Code login<br/><sub>Keychain · ~/.claude/.credentials.json</sub>"]
   API["api.anthropic.com<br/><sub>/api/oauth/usage</sub>"]
   LOGS["Local session logs<br/><sub>~/.claude/projects/**/*.jsonl</sub>"]
-  SB["Status bar<br/><sub>5h 9% · wk 41%</sub>"]
+  SB["Status bar<br/><sub>5h ▰▱▱▱▱ 9% ↻4h 8m · wk ▰▰▱▱▱ 41%</sub>"]
 
   K -->|access token| API
   API -->|five_hour · seven_day| SB
@@ -98,7 +100,11 @@ On every poll, Tokenwatch:
    re-read each time, so a token Claude Code refreshes is picked up without a reload.
 2. **Asks for your quota.** It calls the endpoint behind `/usage` and reads the 5-hour and
    7-day utilization and reset times.
-3. **Falls back if that fails.** It sums today's tokens from your local Claude Code session
+3. **Projects your pace.** Each window has a fixed length, so its reset time also gives its
+   start. Dividing usage by time elapsed gives your average pace, and extending that pace
+   predicts where you'll be at the reset. No history is stored, so this works from the
+   first poll and survives reloads. It needs at least 10 minutes of elapsed window.
+4. **Falls back if live quota fails.** It sums today's tokens from your local Claude Code session
    logs. That's consumption, not remaining quota, because only the server knows your plan's
    limits. The tooltip says why live data was unavailable.
 

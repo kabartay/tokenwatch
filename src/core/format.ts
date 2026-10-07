@@ -4,10 +4,13 @@
 
 import type { UsageState } from './types';
 
+/** Prefix for a reset countdown. Plain Unicode, so it renders in notifications and logs too. */
+export const RESET_SYMBOL = '↻';
+
 /**
  * Summarises a state in one line, for notifications and the log.
  *
- * @returns For example `"5h 42% (resets in 2h 13m) · wk 18%"`.
+ * @returns For example `"5h 9% ↻4h 8m · wk 41%"`.
  */
 export function summarizeState(state: UsageState, now: Date = new Date()): string {
   switch (state.kind) {
@@ -17,7 +20,7 @@ export function summarizeState(state: UsageState, now: Date = new Date()): strin
       return 'no Claude Code login found';
     case 'live': {
       const { session, weekly } = state.snapshot;
-      const reset = session?.resetsAt ? ` (resets ${formatTimeUntil(session.resetsAt, now)})` : '';
+      const reset = session?.resetsAt ? ` ${formatCountdown(session.resetsAt, now)}` : '';
       return `5h ${formatPercent(session?.percentUsed)}${reset} · wk ${formatPercent(weekly?.percentUsed)}`;
     }
     case 'fallback':
@@ -38,21 +41,39 @@ export function formatPercent(percent: number | undefined): string {
 }
 
 /**
- * Describes how long until `target`, coarsened to the two largest units.
+ * Formats a duration coarsened to its two largest units.
  *
- * @param target - The future instant.
- * @param now - Reference time; injectable for tests.
- * @returns For example `"in 2h 13m"`, `"in 3d 4h"`, or `"now"` once passed.
+ * @param ms - Duration in milliseconds.
+ * @returns For example `"2h 13m"`, `"3d 4h"`, `"7m"`, or `"now"` when zero or negative.
  */
-export function formatTimeUntil(target: Date, now: Date = new Date()): string {
-  const totalMinutes = Math.floor((target.getTime() - now.getTime()) / 60_000);
+export function formatDuration(ms: number): string {
+  const totalMinutes = Math.floor(ms / 60_000);
   if (totalMinutes <= 0) return 'now';
   const days = Math.floor(totalMinutes / 1_440);
   const hours = Math.floor((totalMinutes % 1_440) / 60);
   const minutes = totalMinutes % 60;
-  if (days > 0) return `in ${days}d ${hours}h`;
-  if (hours > 0) return `in ${hours}h ${minutes}m`;
-  return `in ${minutes}m`;
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
+/**
+ * Describes how long until `target`, for prose.
+ *
+ * @returns For example `"in 2h 13m"`, or `"now"` once passed.
+ */
+export function formatTimeUntil(target: Date, now: Date = new Date()): string {
+  const d = formatDuration(target.getTime() - now.getTime());
+  return d === 'now' ? d : `in ${d}`;
+}
+
+/**
+ * Compact reset countdown for tight spaces.
+ *
+ * @returns For example `"↻4h 8m"`.
+ */
+export function formatCountdown(target: Date, now: Date = new Date()): string {
+  return `${RESET_SYMBOL}${formatDuration(target.getTime() - now.getTime())}`;
 }
 
 /**

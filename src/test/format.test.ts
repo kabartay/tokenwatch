@@ -4,7 +4,14 @@
 
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-import { formatPercent, formatTimeUntil, formatTokens, summarizeState } from '../core/format';
+import {
+  formatCountdown,
+  formatDuration,
+  formatPercent,
+  formatTimeUntil,
+  formatTokens,
+  summarizeState,
+} from '../core/format';
 
 describe('summarizeState', () => {
   const now = new Date('2026-10-07T12:00:00Z');
@@ -22,7 +29,7 @@ describe('summarizeState', () => {
       },
       now,
     );
-    assert.equal(text, '5h 42% (resets in 2h 13m) · wk 18%');
+    assert.equal(text, '5h 42% ↻2h 13m · wk 18%');
   });
 
   it('names the reason when falling back', () => {
@@ -64,5 +71,19 @@ describe('formatTokens', () => {
     assert.equal(formatTokens(950), '950');
     assert.equal(formatTokens(12_345), '12.3k');
     assert.equal(formatTokens(4_100_000), '4.1M');
+  });
+});
+
+describe('formatDuration / formatCountdown', () => {
+  const now = new Date('2026-10-07T12:00:00Z');
+
+  it('formats durations without a prefix', () => {
+    assert.equal(formatDuration(8 * 60_000), '8m');
+    assert.equal(formatDuration((4 * 60 + 8) * 60_000), '4h 8m');
+    assert.equal(formatDuration(0), 'now');
+  });
+
+  it('prefixes the countdown with the reset symbol', () => {
+    assert.equal(formatCountdown(new Date(now.getTime() + 248 * 60_000), now), '↻4h 8m');
   });
 });

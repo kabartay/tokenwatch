@@ -6,6 +6,21 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Mini progress bars in the status bar: `5h ▰▱▱▱▱ 9% · wk ▰▰▱▱▱ 41%`.
+- Session reset countdown in the status bar: `↻4h 8m`.
+- Pace projection in the tooltip: "~45% at reset", or "runs out in 1h 20m".
+- Pace-aware warnings: yellow text when a window will run out before it resets, amber when
+  that's under an hour away.
+- Settings `tokenwatch.statusBarStyle` (`bars` or `compact`) and `tokenwatch.showResetCountdown`.
+
+### Changed
+
+- The tooltip is a table with a usage bar, pace and exact reset time for each window.
+- Notifications and log lines use `↻4h 8m` instead of `(resets in 4h 8m)`.
+- The ESLint config is written in TypeScript.
+
 ## [0.3.0] — 2026-10-07
 
 ### Added

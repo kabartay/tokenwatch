@@ -20,5 +20,15 @@ export function readConfig(): TokenwatchConfig {
       cfg.get<number>('pollIntervalSeconds', 60),
     ),
     warnThresholdPercent: Math.min(100, Math.max(0, cfg.get<number>('warnThresholdPercent', 80))),
+    statusBarStyle: cfg.get<string>('statusBarStyle') === 'compact' ? 'compact' : 'bars',
+    showResetCountdown: cfg.get<boolean>('showResetCountdown', true),
   };
 }
+
+/** Settings used before the first read, e.g. for the initial "loading" render. */
+export const DEFAULT_CONFIG: TokenwatchConfig = {
+  pollIntervalSeconds: 60,
+  warnThresholdPercent: 80,
+  statusBarStyle: 'bars',
+  showResetCountdown: true,
+};

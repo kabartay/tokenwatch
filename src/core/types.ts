@@ -37,6 +37,10 @@ export interface TokenwatchConfig {
   readonly pollIntervalSeconds: number;
   /** Percentage at or above which the status bar shows a warning. */
   readonly warnThresholdPercent: number;
+  /** `bars` draws a mini progress bar per window; `compact` shows percentages only. */
+  readonly statusBarStyle: 'bars' | 'compact';
+  /** Append the session reset countdown (`↻4h 8m`) to the status bar text. */
+  readonly showResetCountdown: boolean;
 }
 
 /** Everything the status bar can display; one variant per outcome of a refresh. */

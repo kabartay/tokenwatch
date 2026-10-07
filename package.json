@@ -65,7 +65,25 @@
           "default": 80,
           "minimum": 0,
           "maximum": 100,
-          "markdownDescription": "The status bar turns amber when either quota reaches this percentage (and red at 100%)."
+          "markdownDescription": "The status bar turns amber when either quota reaches this percentage, or when at the current pace a quota will run out within the hour. It turns red at 100%."
+        },
+        "tokenwatch.statusBarStyle": {
+          "type": "string",
+          "enum": [
+            "bars",
+            "compact"
+          ],
+          "enumDescriptions": [
+            "5h ▰▱▱▱▱ 9% · wk ▰▰▱▱▱ 41%",
+            "5h 9% · wk 41%"
+          ],
+          "default": "bars",
+          "markdownDescription": "How usage appears in the status bar."
+        },
+        "tokenwatch.showResetCountdown": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show when the 5-hour session resets, for example `↻4h 8m`, in the status bar."
         }
       }
     }

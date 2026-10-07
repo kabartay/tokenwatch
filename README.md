@@ -136,21 +136,15 @@ The internals are in [Architecture](docs/ARCHITECTURE.md), and the endpoint deta
 
 ## FAQ
 
-**Why does it say `~1.5M tok today` instead of percentages?**
-Live quota failed and there were no recent numbers to fall back on, usually a rate limit right
-after install. It switches back on its own once a request succeeds, within a few minutes. The
-log says why.
-
-**Why don't the numbers change right after I click?**
-During a rate-limit backoff a click doesn't send a request, because it would just be rejected.
-The palette command tells you when the next attempt is.
-
 **`ctx` looks too high.**
 Your model probably has a 1M window. See [Recommended setting](#recommended-setting).
 
 **No `ctx` at all?**
 It appears only for a Claude Code session started in a folder open in this window. See
 [Troubleshooting](docs/TROUBLESHOOTING.md#no-ctx--item).
+
+Anything else, such as `~1.5M tok today` or rate limits, is covered in
+[Troubleshooting](docs/TROUBLESHOOTING.md).
 
 ## Privacy
 

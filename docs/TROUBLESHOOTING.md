@@ -5,23 +5,22 @@ saying what was shown and, if it fell back, why.
 
 ## What a healthy log looks like
 
-Every line is the same one-line summary the status bar shows. For example:
+Every line is the same one-line summary the status bar shows. A real log, right after a reload:
 
 ```text
-2026-10-07 23:36:42.385 [info] Tokenwatch 0.5.1 activated
-2026-10-07 23:36:42.385 [info] Restored quota from 2026-10-07T21:36:18.601Z: 5h 24% ↻2h 3m · wk 44%
-2026-10-07 23:36:42.414 [info] 5h 24% ↻2h 3m · wk 44% · ctx: 61%
-2026-10-07 23:38:11.902 [info] 5h 24% ↻2h 1m · wk 44% · ctx: 62%
-2026-10-07 23:39:42.517 [info] 5h 25% ↻2h 0m · wk 44% · ctx: 62%
+2026-10-07 23:49:52.876 [info] Tokenwatch 0.5.1 activated
+2026-10-07 23:49:52.903 [info] 5h 25% ↻1h 50m · wk 44% · ctx: 63%
+2026-10-07 23:49:53.995 [info] 5h 25% ↻1h 50m · wk 44% · ctx: 63%
 ```
 
 How to read it:
 
-- `activated` appears once per window load, followed by `Restored quota` when numbers from
-  before the reload were recent enough to show straight away.
+- `activated` appears once per window load. Numbers saved before a reload are shown straight
+  away; to see the restore itself, set **Developer: Set Log Level… → Tokenwatch → Debug**.
 - A line appears on every quota refresh, about every 3 minutes
   (`tokenwatch.pollIntervalSeconds`), and whenever `ctx` changes, which is after a Claude reply.
-  An off-cycle line soon after `activated` is usually a manual refresh.
+  Two lines a second apart after `activated`, as above, are the context poll and then a quota
+  refresh (usually a manual one); they match because nothing changed in between.
 - `Backing off polling for 180s` follows a rate limit; the line before it says why.
 - **Gaps are normal.** Polls are skipped while the window isn't focused, and the next line
   appears when you come back.

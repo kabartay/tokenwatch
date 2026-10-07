@@ -77,7 +77,14 @@ The item sits at the right end of the status bar.
 - **Click** to refresh. The numbers stay put and only the icon spins.
 - `Cmd+Shift+P` → **Tokenwatch: Refresh Claude Usage** refreshes and shows the result in a
   notification, which helps if the item is out of view.
-- `Cmd+Shift+P` → **Tokenwatch: Show Log** shows what each refresh did.
+- `Cmd+Shift+P` → **Tokenwatch: Show Log** shows what each refresh did, in the same one-line
+  form:
+
+  ```text
+  2026-10-07 23:49:52.876 [info] Tokenwatch 0.5.1 activated
+  2026-10-07 23:49:52.903 [info] 5h 25% ↻1h 50m · wk 44% · ctx: 63%
+  2026-10-07 23:49:53.995 [info] 5h 25% ↻1h 50m · wk 44% · ctx: 63%
+  ```
 
 | Colour | When |
 | --- | --- |

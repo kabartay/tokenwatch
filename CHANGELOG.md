@@ -6,6 +6,13 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+## [0.5.2] — 2026-10-07
+
+### Changed
+
+- The `Restored quota` and `Restored backoff` log lines moved to the Debug log level, so the
+  default log is only `activated` and the one-line summaries. README shows an example.
+
 ## [0.5.1] — 2026-10-07
 
 ### Changed
@@ -137,7 +144,8 @@ All notable changes to Tokenwatch. The format follows
 
 - Initial release.
 
-[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/kabartay/tokenwatch/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/kabartay/tokenwatch/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/kabartay/tokenwatch/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/kabartay/tokenwatch/compare/v0.4.1...v0.4.2

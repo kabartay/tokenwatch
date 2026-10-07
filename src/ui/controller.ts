@@ -56,11 +56,12 @@ export class UsageController implements vscode.Disposable {
     const { policy, log, statusBar } = this.deps;
     const restored = policy.restore(this.pollMs());
     if (restored.backoffRemainingMs !== undefined) {
-      log.info(`Restored backoff: next request in ${formatDuration(restored.backoffRemainingMs)}`);
+      log.debug(`Restored backoff: next request in ${formatDuration(restored.backoffRemainingMs)}`);
     }
     if (restored.state) {
       this.state = restored.state;
-      log.info(`Restored quota from ${restored.state.fetchedAt.toISOString()}: ${summarizeState(this.state)}`);
+      // Debug level: the one-line summary that follows already shows these numbers.
+      log.debug(`Restored quota from ${restored.state.fetchedAt.toISOString()}: ${summarizeState(this.state)}`);
       statusBar.render(this.state, this.config);
     }
     this.schedule();

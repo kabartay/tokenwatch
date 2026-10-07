@@ -6,6 +6,16 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Clicking the item no longer blanks the line into a `Claude` spinner while it refreshes; the
+  numbers stay and only the icon spins.
+
+### Changed
+
+- README: what each part of the line means, a colour legend, requirements, the recommended
+  setting for 1M-context models, and an FAQ.
+
 ## [0.4.1] — 2026-10-07
 
 ### Fixed

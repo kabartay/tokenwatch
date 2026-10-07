@@ -43,6 +43,8 @@ export class UsageStatusBar implements vscode.Disposable {
   private state: UsageState = { kind: 'loading' };
   private config: TokenwatchConfig = DEFAULT_CONFIG;
   private context: ContextReading | undefined;
+  /** True while a manual refresh is in flight: the line stays, only its icon spins. */
+  private refreshing = false;
 
   /** @param clickCommand - Command run when the item is clicked. */
   constructor(clickCommand: vscode.Command) {
@@ -80,12 +82,25 @@ export class UsageStatusBar implements vscode.Disposable {
     this.repaint();
   }
 
+  /**
+   * Marks a manual refresh as in flight. The current numbers stay on screen and only the
+   * leading icon becomes a spinner, so a click never blanks the line.
+   */
+  setRefreshing(refreshing: boolean): void {
+    this.refreshing = refreshing;
+    this.repaint();
+  }
+
   dispose(): void {
     this.item.dispose();
   }
 
   private repaint(): void {
-    const quota = this.renderQuota();
+    const rendered = this.renderQuota();
+    const quota =
+      this.refreshing && this.state.kind !== 'loading'
+        ? { ...rendered, text: rendered.text.replace(/^\$\([^)]*\)/, '$(sync~spin)') }
+        : rendered;
     const contextText = this.context ? `ctx: ${formatPercent(this.context.percent)}` : undefined;
     this.item.text = contextText ? `${quota.text} · ${contextText}` : quota.text;
     this.item.tooltip = combinedTooltip(quota.tooltip, this.context);
@@ -116,7 +131,7 @@ export class UsageStatusBar implements vscode.Disposable {
     const state = this.state;
     switch (state.kind) {
       case 'loading':
-        return { text: '$(sync~spin) Claude', tooltip: 'Tokenwatch: fetching usage…' };
+        return { text: '$(sync~spin) Claude usage', tooltip: 'Tokenwatch: fetching usage…' };
       case 'noCredentials':
         return {
           text: '$(account) Claude: log in',

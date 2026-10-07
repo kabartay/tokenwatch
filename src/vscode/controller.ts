@@ -115,8 +115,12 @@ export class UsageController implements vscode.Disposable {
       }
       return;
     }
-    this.deps.statusBar.render({ kind: 'loading' }, this.config);
-    await this.refresh();
+    this.deps.statusBar.setRefreshing(true);
+    try {
+      await this.refresh();
+    } finally {
+      this.deps.statusBar.setRefreshing(false);
+    }
     if (!notify) return;
 
     const message = `Tokenwatch: ${summarizeState(this.state)}`;

@@ -5,8 +5,8 @@
 <h1 align="center">Tokenwatch</h1>
 
 <p align="center">
-  <strong>Your Claude Code quota, live in the VS Code status bar.</strong><br>
-  Stop typing <code>/usage</code> mid-flow to find out whether you're about to hit the wall.
+  <strong>Your Claude Code quota and context, live in the VS Code status bar.</strong><br>
+  Stop typing <code>/usage</code> or <code>/context</code> mid-flow to find out whether you're about to hit the wall.
 </p>
 
 <p align="center">
@@ -20,28 +20,33 @@
 </p>
 
 ```
-5h ▰▱▱▱▱ 9% ↻4h 8m · wk ▰▰▱▱▱ 41% · ctx: 29%
+5h ▰▱▱▱▱ 19% ↻2h 35m · wk ▰▰▱▱▱ 43% · ctx: 47%
 ```
+
+| Part | Means |
+| --- | --- |
+| `5h ▰▱▱▱▱ 19%` | 19% of your rolling 5-hour session quota is used. |
+| `↻2h 35m` | The 5-hour session resets in 2 hours 35 minutes. |
+| `wk ▰▰▱▱▱ 43%` | 43% of your weekly quota is used. |
+| `ctx: 47%` | The Claude Code session in this folder has filled 47% of its context window, as `/context` reports. |
+
+Hover over it for the details: both quota windows with their reset times and a pace forecast
+("~45% at reset", or "runs out in 1h 20m"), plus the context's token count and model.
 
 ## Features
 
-- **Live session (5h) and weekly (7d) quota**, from the same source `/usage` reads, with a
-  mini progress bar for each.
-- **Reset countdown** right in the status bar: `↻4h 8m` until the 5-hour session resets.
-- **Pace projection.** The tooltip shows where each window is heading at your pace so far:
-  "~45% at reset", or "runs out in 1h 20m" if you'll hit the limit first.
-- **Context size**: `· ctx: 29%` appended to the same line, showing how full the context
-  window is in the latest Claude Code session started in this window's folder, like `/context`.
-- **Warnings before it's too late.** The text turns **yellow** when you're on pace to run out
-  before the reset, the item turns **amber** at your threshold or when the limit is under an
-  hour away, and **red** at 100%.
-- **Zero setup.** Reuses your existing Claude Code login; nothing to paste, no API key.
-- **Graceful fallback.** If live quota is unavailable, it shows today's token count from your
-  local session logs, and says why, instead of going stale or showing a wrong number.
-- **Light.** Unfocused windows skip polls, the fallback reads only newly written log bytes,
-  and there are no runtime dependencies.
+- **Quota and context on one line**, from the same sources `/usage` and `/context` read.
+- **Pace forecast.** Tells you before you run out, not after.
+- **Colours that warn early.** Yellow when you're on pace to run out before the reset, amber
+  past your threshold or within the hour, red at 100%.
+- **Zero setup.** Reuses your existing Claude Code login: nothing to paste, no API key.
+- **Calm under rate limits.** It backs off politely, keeps your last numbers on screen, and
+  remembers them across window reloads.
+- **Light and auditable.** No runtime dependencies, no telemetry. Unfocused windows don't poll.
 
 ## Install
+
+**Requirements:** VS Code 1.85 or newer, and Claude Code installed and logged in (`claude`).
 
 1. Download `tokenwatch-<version>.vsix` from the
    [latest release](https://github.com/kabartay/tokenwatch/releases/latest).
@@ -49,40 +54,54 @@
    choose **Install from VSIX…**, and pick the file.
 3. Reload the window: `Cmd+Shift+P` → **Developer: Reload Window**.
 
-From a terminal, run `code --install-extension tokenwatch-*.vsix`. With the `gh` CLI,
+From a terminal: `code --install-extension tokenwatch-*.vsix`. With the `gh` CLI,
 `./install.sh` downloads and installs the latest release in one step. Updates aren't
 automatic, so repeat this for each release.
 
+### Recommended setting
+
+Claude Code transcripts record the model but not its context window size. If your models run
+with a 1M window (`/context` shows `/ 1.0M tokens`), tell Tokenwatch so `ctx` is right from
+the first reply:
+
+```jsonc
+// settings.json
+"tokenwatch.contextWindowTokens": { "claude-opus": 1000000, "claude-sonnet": 1000000 }
+```
+
 ## Usage
 
-The item sits at the right end of the status bar. Quota refreshes every 3 minutes (the usage
-endpoint's rate limit is shared with Claude Code itself); the reset countdown and `ctx` update
-every 15 seconds.
+The item sits at the right end of the status bar.
 
-| Shows | Meaning |
-| --- | --- |
-| `5h ▰▱▱▱▱ 9% ↻4h 8m · wk ▰▰▱▱▱ 41% · ctx: 29%` | Live quota: share used of the 5-hour session (resetting in 4h 8m) and of the week. |
-| `· ctx: 29%` | Context window used by this folder's latest Claude session, appended to the quota text. Yellow from 70%, amber from 90%. Omitted when there's no session. |
-| `~1.2M tok today` | Live quota unavailable. Shows tokens logged locally today, and the tooltip says why. |
-| `Claude: log in` | No Claude Code login found. Run `claude` and log in. |
-| `Claude usage` in red | Nothing worked. The tooltip has the error. |
-
-- **Hover** for a table of both windows: usage bar, pace projection and exact reset times.
-- **Click** to refresh now.
+- **Hover** for the full breakdown.
+- **Click** to refresh. The numbers stay put and only the icon spins.
 - `Cmd+Shift+P` → **Tokenwatch: Refresh Claude Usage** refreshes and shows the result in a
   notification, which helps if the item is out of view.
 - `Cmd+Shift+P` → **Tokenwatch: Show Log** shows what each refresh did.
+
+| Colour | When |
+| --- | --- |
+| Default | Comfortable pace. |
+| Yellow text | At this pace, a quota window runs out before it resets; or context is past 70%. |
+| Amber background | A quota window is past your threshold (80%) or runs out within the hour; or context is past 90%. |
+| Red background | A quota window is used up. |
+
+| Other states | Meaning |
+| --- | --- |
+| `~1.5M tok today` | Live quota is unavailable and there are no recent numbers to show, so it counts today's tokens from local logs instead. The tooltip says why. |
+| `Claude: log in` | No Claude Code login found. Run `claude` and log in. |
+| `Claude usage` in red | Nothing worked. The tooltip has the error. |
 
 ## Configuration
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `tokenwatch.pollIntervalSeconds` | `180` | Seconds between quota refreshes (minimum 60). Faster polling draws 429s. |
+| `tokenwatch.pollIntervalSeconds` | `180` | Seconds between quota requests (minimum 60). Faster polling draws rate limits. |
 | `tokenwatch.warnThresholdPercent` | `80` | Turn amber at or above this percentage. |
-| `tokenwatch.statusBarStyle` | `bars` | `bars` shows `5h ▰▱▱▱▱ 9%`; `compact` shows `5h 9%`. |
-| `tokenwatch.showResetCountdown` | `true` | Show `↻4h 8m` until the session resets. |
-| `tokenwatch.showContext` | `true` | Show the `ctx %` item. |
-| `tokenwatch.contextWindowTokens` | `{}` | Context window per model, for example `{ "claude-opus": 1000000 }`. Keys match an exact id, a prefix, or `"*"`. Unlisted models assume 200k, or 1M once a session passes 200k. |
+| `tokenwatch.statusBarStyle` | `bars` | `bars` shows `5h ▰▱▱▱▱ 19%`; `compact` shows `5h 19%`. |
+| `tokenwatch.showResetCountdown` | `true` | Show `↻2h 35m` until the session resets. |
+| `tokenwatch.showContext` | `true` | Append `ctx: N%` for this folder's Claude Code session. |
+| `tokenwatch.contextWindowTokens` | `{}` | Context window per model: an exact id, a prefix such as `"claude-opus"`, or `"*"`. Unlisted models assume 200k, or 1M once a session passes 200k. |
 
 Changes apply immediately, with no reload.
 
@@ -92,58 +111,71 @@ Changes apply immediately, with no reload.
 flowchart LR
   K["Claude Code login<br/><sub>Keychain · ~/.claude/.credentials.json</sub>"]
   API["api.anthropic.com<br/><sub>/api/oauth/usage</sub>"]
-  LOGS["Local session logs<br/><sub>~/.claude/projects/**/*.jsonl</sub>"]
-  SB["Status bar<br/><sub>5h ▰▱▱▱▱ 9% ↻4h 8m · wk ▰▰▱▱▱ 41% · ctx: 29%</sub>"]
+  T["Session transcripts<br/><sub>~/.claude/projects/**/*.jsonl</sub>"]
+  SB["Status bar<br/><sub>5h 19% ↻2h 35m · wk 43% · ctx: 47%</sub>"]
 
   K -->|access token| API
-  API -->|five_hour · seven_day| SB
-  API -.->|on failure| LOGS
-  LOGS -.->|tokens today| SB
+  API -->|"quota · every 3 min"| SB
+  T -->|"context · every 15 s"| SB
+  T -.->|"tokens today, if quota fails"| SB
 ```
 
-On every poll, Tokenwatch:
+- **Quota** comes from the endpoint behind `/usage`, called with the login Claude Code already
+  stores. The token is re-read on every request, so a token Claude Code refreshes is picked
+  up automatically.
+- **Pace** needs no history. Each window has a fixed length, so its reset time also gives its
+  start, and usage divided by elapsed time is your average pace.
+- **Context** is read from the end of the newest transcript for this folder: the token count
+  of the last reply, which is what `/context` reports.
+- **Rate limits.** The endpoint's limit is shared with Claude Code itself, so Tokenwatch polls
+  every 3 minutes, backs off for at least 3 more after a 429, and keeps the last numbers on
+  screen meanwhile. The reset countdown and `ctx` keep updating every 15 seconds.
 
-1. **Reads your login.** It reads the OAuth token Claude Code already stores. The token is
-   re-read each time, so a token Claude Code refreshes is picked up without a reload.
-2. **Asks for your quota.** It calls the endpoint behind `/usage` and reads the 5-hour and
-   7-day utilization and reset times.
-3. **Projects your pace.** Each window has a fixed length, so its reset time also gives its
-   start. Dividing usage by time elapsed gives your average pace, and extending that pace
-   predicts where you'll be at the reset. No history is stored, so this works from the
-   first poll and survives reloads. It needs at least 10 minutes of elapsed window.
-4. **Falls back if live quota fails.** It sums today's tokens from your local Claude Code session
-   logs. That's consumption, not remaining quota, because only the server knows your plan's
-   limits. The tooltip says why live data was unavailable.
+The internals are in [Architecture](docs/ARCHITECTURE.md), and the endpoint details are in
+[Usage endpoint](docs/USAGE_ENDPOINT.md).
 
-The internals are explained in [Architecture](docs/ARCHITECTURE.md), and the endpoint
-details are in [Usage endpoint](docs/USAGE_ENDPOINT.md).
+## FAQ
+
+**Why does it say `~1.5M tok today` instead of percentages?**
+Live quota failed and there were no recent numbers to fall back on, usually a rate limit right
+after install. It switches back on its own once a request succeeds, within a few minutes. The
+log says why.
+
+**Why don't the numbers change right after I click?**
+During a rate-limit backoff a click doesn't send a request, because it would just be rejected.
+The palette command tells you when the next attempt is.
+
+**`ctx` looks too high.**
+Your model probably has a 1M window. See [Recommended setting](#recommended-setting).
+
+**No `ctx` at all?**
+It appears only for a Claude Code session started in a folder open in this window. See
+[Troubleshooting](docs/TROUBLESHOOTING.md#no-ctx--item).
 
 ## Privacy
 
-- Your access token is sent **only** to `api.anthropic.com`, over HTTPS.
-- It is never logged or written to disk, and a unit test checks that it never reaches the
-  log.
-- Your local session transcripts are read for token counts, model ids and timestamps only, to
-  show context size and for the fallback. Nothing else is extracted from them, and nothing
-  from them leaves your machine.
-- There's no telemetry and there are no runtime dependencies.
+- Your access token is sent **only** to `api.anthropic.com`, over HTTPS. It is never logged or
+  stored, and a unit test checks that it never reaches the log.
+- Transcripts are read for token counts, model ids and timestamps only. Nothing from them
+  leaves your machine.
+- The last quota response (percentages and reset times) is kept in VS Code's extension storage
+  so a reload can show it at once.
+- No telemetry, no runtime dependencies.
 
-The Tokenwatch log records refresh outcomes and error messages. If the endpoint's reply
-isn't recognised, the log also includes up to 1,000 characters of that reply.
-[SECURITY.md](SECURITY.md) lists exactly what is read, sent and logged.
+[SECURITY.md](SECURITY.md) lists exactly what is read, sent, stored and logged.
 
 ## Caveats
 
 **Tokenwatch is unofficial and not affiliated with Anthropic.** It relies on an undocumented
-endpoint that can change or disappear without notice. If that happens, Tokenwatch switches
-to the local fallback, and the log records the response so it can be fixed quickly.
+endpoint that can change or disappear without notice. If that happens, Tokenwatch falls back
+to local token counts, and the log records the response so it can be fixed quickly.
 
 ## Documentation
 
 | | |
 | --- | --- |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Unexpected status, reading the log, Keychain access. |
-| [Usage endpoint](docs/USAGE_ENDPOINT.md) | Request, response and status codes, and what to do when it changes. |
+| [Usage endpoint](docs/USAGE_ENDPOINT.md) | Request, response, status codes and rate limits. |
 | [Architecture](docs/ARCHITECTURE.md) | Layers, the refresh decision, design decisions. |
 | [Development](docs/DEVELOPMENT.md) | Build, test, conventions and the release checklist. |
 | [Changelog](CHANGELOG.md) | What changed in each version. |

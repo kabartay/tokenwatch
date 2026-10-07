@@ -4,8 +4,8 @@
 
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-import { assess, describePace, paceOf, progressBar, WINDOW_LENGTH_MS } from '../core/insights';
-import type { UsageSnapshot, UsageWindow } from '../core/types';
+import { assess, describePace, paceOf, progressBar, WINDOW_LENGTH_MS } from '../../domain/insights';
+import type { UsageSnapshot, UsageWindow } from '../../domain/types';
 
 const HOUR = 3_600_000;
 const NOW = new Date('2026-10-07T12:00:00Z');

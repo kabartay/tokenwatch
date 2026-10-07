@@ -8,8 +8,9 @@
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import type { UsageEstimator } from './contracts';
-import type { LocalUsageEstimate } from './types';
+import type { UsageEstimator } from '../application/ports';
+import { tokenUsageOf } from '../domain/transcript';
+import type { LocalUsageEstimate } from '../domain/types';
 
 /** Bytes read per `read()` call while scanning a log file. */
 const CHUNK_BYTES = 4 * 1024 * 1024;
@@ -148,35 +149,4 @@ export class LocalUsageEstimator implements UsageEstimator {
       this.tokensToday += usage.tokens;
     }
   }
-}
-
-/**
- * Extracts the token count and de-duplication key of one log entry.
- *
- * @param entry - One parsed JSON line from a session log.
- * @param since - Entries logged before this instant are ignored.
- * @returns `undefined` for entries without usage or logged before `since`.
- */
-export function tokenUsageOf(
-  entry: unknown,
-  since: Date,
-): { key: string; tokens: number } | undefined {
-  if (!entry || typeof entry !== 'object') return undefined;
-  const e = entry as {
-    timestamp?: unknown;
-    requestId?: unknown;
-    message?: { id?: unknown; usage?: { input_tokens?: unknown; output_tokens?: unknown } };
-  };
-  const usage = e.message?.usage;
-  if (!usage || typeof e.timestamp !== 'string') return undefined;
-  const at = new Date(e.timestamp);
-  if (Number.isNaN(at.getTime()) || at < since) return undefined;
-
-  const input = typeof usage.input_tokens === 'number' ? usage.input_tokens : 0;
-  const output = typeof usage.output_tokens === 'number' ? usage.output_tokens : 0;
-  const requestId = typeof e.requestId === 'string' ? e.requestId : '';
-  // Without a string message id, fall back to the timestamp so distinct entries never collapse.
-  const messageId = e.message?.id;
-  const messageKey = typeof messageId === 'string' && messageId ? messageId : `ts:${e.timestamp}`;
-  return { key: `${messageKey}:${requestId}`, tokens: input + output };
 }

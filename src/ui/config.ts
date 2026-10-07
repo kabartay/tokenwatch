@@ -3,7 +3,7 @@
  */
 
 import * as vscode from 'vscode';
-import type { TokenwatchConfig } from '../core/types';
+import type { TokenwatchConfig } from '../domain/types';
 
 /** Settings section; every key in `package.json` → `contributes.configuration` sits under it. */
 export const CONFIG_SECTION = 'tokenwatch';

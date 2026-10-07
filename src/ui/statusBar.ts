@@ -8,7 +8,7 @@
  */
 
 import * as vscode from 'vscode';
-import { formatClock, formatCountdown, formatPercent, formatTokens, formatTokensRounded } from '../core/format';
+import { formatClock, formatCountdown, formatPercent, formatTokens, formatTokensRounded } from '../domain/format';
 import {
   assess,
   describePace,
@@ -17,9 +17,8 @@ import {
   WINDOW_LENGTH_MS,
   type AlertLevel,
   type WindowName,
-} from '../core/insights';
-import type { ContextReading } from '../core/contextUsage';
-import type { TokenwatchConfig, UsageSnapshot, UsageState, UsageWindow } from '../core/types';
+} from '../domain/insights';
+import type { ContextReading, TokenwatchConfig, UsageSnapshot, UsageState, UsageWindow } from '../domain/types';
 import { DEFAULT_CONFIG } from './config';
 
 /** Segments in the status bar bar; the tooltip uses a wider one. */

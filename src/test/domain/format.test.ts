@@ -11,8 +11,9 @@ import {
   formatPercent,
   formatTimeUntil,
   formatTokens,
+  formatTokensRounded,
   summarizeState,
-} from '../core/format';
+} from '../../domain/format';
 
 describe('summarizeState', () => {
   const now = new Date('2026-10-07T12:00:00Z');
@@ -100,5 +101,15 @@ describe('formatDuration / formatCountdown', () => {
 
   it('prefixes the countdown with the reset symbol', () => {
     assert.equal(formatCountdown(new Date(now.getTime() + 248 * 60_000), now), '↻4h 8m');
+  });
+});
+
+describe('formatTokensRounded', () => {
+  it('rounds to whole thousands and tidy millions', () => {
+    assert.equal(formatTokensRounded(950), '950');
+    assert.equal(formatTokensRounded(291_388), '291k');
+    assert.equal(formatTokensRounded(999_700), '1M');
+    assert.equal(formatTokensRounded(1_000_000), '1M');
+    assert.equal(formatTokensRounded(1_520_000), '1.5M');
   });
 });

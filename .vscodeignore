@@ -12,3 +12,4 @@ eslint.config.ts
 tsconfig.json
 scripts/**
 *.vsix
+CLAUDE.md

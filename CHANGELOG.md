@@ -6,6 +6,13 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Source reorganised into four layers, `domain/`, `application/`, `infrastructure/` and `ui/`,
+  with dependencies pointing inward and enforced by ESLint. The backoff, stale-numbers and
+  restore-after-reload logic moved out of the VS Code controller into a unit-tested
+  `RefreshPolicy`. No change in behaviour.
+
 ## [0.4.2] — 2026-10-07
 
 ### Fixed

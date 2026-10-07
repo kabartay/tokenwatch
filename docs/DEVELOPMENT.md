@@ -35,11 +35,13 @@ code --install-extension tokenwatch-*.vsix --force
 
 ## Conventions
 
-- **`src/core/` must not import `vscode`.** Put logic there and keep `src/vscode/` thin. See
-  [ARCHITECTURE.md](ARCHITECTURE.md).
+- **Respect the layers.** Pure logic goes in `src/domain/`, use cases and ports in
+  `src/application/`, I/O adapters in `src/infrastructure/`, VS Code code in `src/ui/`.
+  Dependencies point inward, and `npm run lint` fails on an import across a boundary. See
+  [ARCHITECTURE.md](ARCHITECTURE.md#layers).
 - **Every file starts with a `@file` header, and every export has TSDoc.** Comments explain
   *why*; names explain *what*.
-- **Depend on interfaces** (`core/contracts.ts`) and pass collaborators into constructors.
+- **Depend on interfaces** (`application/ports.ts`) and pass collaborators into constructors.
   Tests use in-memory fakes, not mocking libraries.
 - **Never put the access token in a log message, an error message or a tooltip.** A test in
   `usageService.test.ts` checks this for every outcome. Extend it if you add a new one.
@@ -49,18 +51,24 @@ code --install-extension tokenwatch-*.vsix --force
 
 ## Tests
 
-Tests live in `src/test/*.test.ts` and use only `node:test` and `node:assert`:
+Tests live in `src/test/<layer>/*.test.ts`, mirroring `src/`, and use only `node:test` and
+`node:assert`:
 
 | File | Covers |
 | --- | --- |
-| `credentials.test.ts` | Token extraction from every credential shape; source fallback order. |
-| `usageApi.test.ts` | Response parsing, including unrecognised and partial shapes. |
-| `usageApiClient.test.ts` | Real HTTP against a local server: headers, status codes, timeouts, bad JSON. |
-| `usageService.test.ts` | The live → fallback → error decision; the token never reaches the log. |
-| `localUsage.test.ts` | Incremental log scanning, de-duplication, partial lines, rewritten files. |
-| `format.test.ts` | Percentages, countdowns, token counts, summaries. |
+| `domain/usageResponse.test.ts` | Response parsing, including unrecognised and partial shapes. |
+| `domain/transcript.test.ts` | Transcript lines: context size, token counts, de-duplication keys, folder names. |
+| `domain/contextWindow.test.ts` | Window size per model: exact id, prefix, `*`, 200k/1M inference. |
+| `domain/insights.test.ts` | Progress bars, pace projection, alert levels. |
+| `domain/format.test.ts` | Percentages, countdowns, token counts, summaries. |
+| `application/usageService.test.ts` | The live → fallback → error decision and backoff mapping; the token never reaches the log. |
+| `application/refreshPolicy.test.ts` | Backoff timing, stale numbers during a rate limit, what's saved, restore after reload. |
+| `infrastructure/usageApiClient.test.ts` | Real HTTP against a local server: headers, status codes, `Retry-After`, timeouts, bad JSON. |
+| `infrastructure/credentials.test.ts` | Token extraction from every credential shape; source fallback order. |
+| `infrastructure/localUsageEstimator.test.ts` | Incremental log scanning, partial lines, rewritten files. |
+| `infrastructure/contextReader.test.ts` | Newest transcript, subagent entries skipped, long tails. |
 
-The VS Code layer (`src/vscode/`) has no automated tests. Check it by hand with F5 before
+The VS Code layer (`src/ui/`) has no automated tests; it is kept thin for that reason. Check it by hand with F5 before
 a release.
 
 ## Releasing

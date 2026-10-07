@@ -1,7 +1,7 @@
 /**
  * @file Shared domain types for Tokenwatch.
  *
- * Everything under `src/core/` is free of any `vscode` import so it can be unit-tested
+ * Everything under `src/domain/` is pure, with no I/O and no `vscode`, so it is unit-tested
  * with the plain Node test runner.
  */
 
@@ -29,6 +29,32 @@ export interface LocalUsageEstimate {
   readonly tokensToday: number;
   /** Number of distinct assistant messages those tokens came from. */
   readonly messageCount: number;
+}
+
+/** The context size recorded by one main-thread reply in a session transcript. */
+export interface ContextReply {
+  /** Input, cache-write and cache-read tokens sent with the reply: the context size. */
+  readonly tokens: number;
+  /** Model that produced the reply, e.g. `claude-opus-5-5`. */
+  readonly model?: string;
+  /** When the reply was logged. */
+  readonly at: Date;
+}
+
+/** One context-size reading. */
+export interface ContextReading {
+  /** Tokens in context at the last reply. */
+  readonly tokens: number;
+  /** Window size the percentage is relative to. */
+  readonly windowTokens: number;
+  /** Whether `windowTokens` was inferred rather than taken from settings. */
+  readonly windowInferred: boolean;
+  /** `tokens / windowTokens` as a percentage; can exceed 100 if the window is set too small. */
+  readonly percent: number;
+  /** Model that produced the last reply, e.g. `claude-opus-5-5`. */
+  readonly model?: string;
+  /** When the last reply was logged. */
+  readonly at: Date;
 }
 
 /** User-tunable settings, already validated and clamped. */

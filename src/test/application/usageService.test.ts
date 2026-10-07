@@ -4,11 +4,11 @@
 
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-import type { AccessTokenProvider, Logger, UsageEstimator, UsageFetcher } from '../core/contracts';
-import { UsageApiError } from '../core/errors';
-import { parseUsageResponse } from '../core/usageApi';
-import { describeFailure, rateLimitBackoffSeconds, UsageService } from '../core/usageService';
-import type { LocalUsageEstimate, UsageSnapshot } from '../core/types';
+import { UsageApiError } from '../../application/errors';
+import type { AccessTokenProvider, Logger, UsageEstimator, UsageFetcher } from '../../application/ports';
+import { describeFailure, rateLimitBackoffSeconds, UsageService } from '../../application/usageService';
+import type { LocalUsageEstimate, UsageSnapshot } from '../../domain/types';
+import { parseUsageResponse } from '../../domain/usageResponse';
 
 const TOKEN = 'sk-ant-oat01-SECRET';
 const NOW = new Date('2026-10-07T12:00:00Z');

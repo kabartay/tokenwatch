@@ -1,16 +1,17 @@
 /**
- * @file VS Code entry point: wires the core services to the status bar.
+ * @file VS Code entry point and composition root: builds each layer's objects and connects them.
  */
 
 import * as vscode from 'vscode';
-import { ContextReader } from './core/contextUsage';
-import { CredentialStore } from './core/credentials';
-import { LocalUsageEstimator } from './core/localUsage';
-import { UsageApiClient } from './core/usageApi';
-import { UsageService } from './core/usageService';
-import { ContextMonitor } from './vscode/contextMonitor';
-import { UsageController } from './vscode/controller';
-import { UsageStatusBar } from './vscode/statusBar';
+import { RefreshPolicy } from './application/refreshPolicy';
+import { UsageService } from './application/usageService';
+import { ContextReader } from './infrastructure/contextReader';
+import { CredentialStore } from './infrastructure/credentials';
+import { LocalUsageEstimator } from './infrastructure/localUsageEstimator';
+import { UsageApiClient } from './infrastructure/usageApiClient';
+import { ContextMonitor } from './ui/contextMonitor';
+import { UsageController } from './ui/controller';
+import { UsageStatusBar } from './ui/statusBar';
 
 /** Command ids contributed in `package.json`. */
 export const REFRESH_COMMAND = 'tokenwatch.refresh';
@@ -36,7 +37,8 @@ export function activate(context: vscode.ExtensionContext): void {
     estimator: new LocalUsageEstimator(),
     log,
   });
-  const controller = new UsageController({ service, statusBar, log, storage: context.globalState });
+  const policy = new RefreshPolicy(context.globalState);
+  const controller = new UsageController({ service, policy, statusBar, log });
   const contextMonitor = new ContextMonitor(new ContextReader(), statusBar, log);
 
   context.subscriptions.push(

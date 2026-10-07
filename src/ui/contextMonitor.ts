@@ -6,7 +6,7 @@
  */
 
 import * as vscode from 'vscode';
-import type { ContextReader } from '../core/contextUsage';
+import type { ContextSource } from '../application/ports';
 import { CONFIG_SECTION, readConfig } from './config';
 import type { UsageStatusBar } from './statusBar';
 
@@ -22,12 +22,12 @@ export class ContextMonitor implements vscode.Disposable {
   private readonly subscriptions: vscode.Disposable[] = [];
 
   /**
-   * @param reader - Reads context size from session transcripts.
+   * @param reader - Reads context size, e.g. from session transcripts.
    * @param statusBar - Shared status bar item to feed readings into.
    * @param log - Diagnostics sink.
    */
   constructor(
-    private readonly reader: ContextReader,
+    private readonly reader: ContextSource,
     private readonly statusBar: UsageStatusBar,
     private readonly log: vscode.LogOutputChannel,
   ) {

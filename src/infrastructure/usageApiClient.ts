@@ -1,18 +1,16 @@
 /**
- * @file Client for the server-side usage endpoint that Claude Code's `/usage` reads.
+ * @file HTTP client for the undocumented usage endpoint that Claude Code's `/usage` reads.
  *
- * The endpoint is undocumented. Its response shape,
- * `{"five_hour": {"utilization": 42, "resets_at": "<ISO>"}, "seven_day": {...}}`, was
- * confirmed against a live account on 2026-10-07 (see docs/USAGE_ENDPOINT.md). The parser
- * also tolerates a few plausible renames and keeps the raw body, so a future change degrades
- * to the local fallback instead of showing wrong numbers.
+ * Only transport lives here: request, status handling, `Retry-After`. The body is mapped by
+ * the pure `parseUsageResponse` in `domain/usageResponse.ts`.
  */
 
 import type { ClientRequest, IncomingMessage, RequestOptions } from 'http';
 import * as https from 'https';
-import type { UsageFetcher } from './contracts';
-import { UsageApiError } from './errors';
-import type { UsageSnapshot, UsageWindow } from './types';
+import { UsageApiError } from '../application/errors';
+import type { UsageFetcher } from '../application/ports';
+import type { UsageSnapshot } from '../domain/types';
+import { parseUsageResponse } from '../domain/usageResponse';
 
 /** Signature shared by `https.request` and `http.request`. */
 export type RequestFn = (
@@ -20,10 +18,6 @@ export type RequestFn = (
   callback: (res: IncomingMessage) => void,
 ) => ClientRequest;
 
-const SESSION_KEYS = ['five_hour', 'fiveHour', 'session'] as const;
-const WEEKLY_KEYS = ['seven_day', 'sevenDay', 'weekly'] as const;
-const PERCENT_KEYS = ['utilization', 'percent', 'percentage'] as const;
-const RESET_KEYS = ['resets_at', 'resetsAt', 'reset_at'] as const;
 
 /** Connection settings for {@link UsageApiClient}. */
 export interface UsageApiOptions {
@@ -114,65 +108,6 @@ export class UsageApiClient implements UsageFetcher {
       req.end();
     });
   }
-}
-
-/**
- * Maps a raw response body onto a {@link UsageSnapshot}.
- *
- * @param body - Parsed JSON from the usage endpoint.
- * @returns A snapshot; `session`/`weekly` are undefined when not recognised.
- */
-export function parseUsageResponse(body: unknown): UsageSnapshot {
-  if (!isRecord(body)) return { raw: body };
-  return {
-    session: parseWindow(firstRecord(body, SESSION_KEYS)),
-    weekly: parseWindow(firstRecord(body, WEEKLY_KEYS)),
-    raw: body,
-  };
-}
-
-/** @returns True if the snapshot carries at least one usable window. */
-export function hasAnyWindow(snapshot: UsageSnapshot): boolean {
-  return snapshot.session !== undefined || snapshot.weekly !== undefined;
-}
-
-function parseWindow(section: Record<string, unknown> | undefined): UsageWindow | undefined {
-  if (!section) return undefined;
-  const percentUsed = firstValue(section, PERCENT_KEYS, isFiniteNumber);
-  if (percentUsed === undefined) return undefined;
-  const resetRaw = firstValue(section, RESET_KEYS, (v): v is string => typeof v === 'string');
-  const resetsAt = resetRaw === undefined ? undefined : new Date(resetRaw);
-  return {
-    percentUsed: Math.max(0, percentUsed),
-    resetsAt: resetsAt && !Number.isNaN(resetsAt.getTime()) ? resetsAt : undefined,
-  };
-}
-
-function firstRecord(
-  obj: Record<string, unknown>,
-  keys: readonly string[],
-): Record<string, unknown> | undefined {
-  return firstValue(obj, keys, isRecord);
-}
-
-function firstValue<T>(
-  obj: Record<string, unknown>,
-  keys: readonly string[],
-  guard: (v: unknown) => v is T,
-): T | undefined {
-  for (const key of keys) {
-    const value = obj[key];
-    if (guard(value)) return value;
-  }
-  return undefined;
-}
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null && !Array.isArray(v);
-}
-
-function isFiniteNumber(v: unknown): v is number {
-  return typeof v === 'number' && Number.isFinite(v);
 }
 
 /**

@@ -7,7 +7,7 @@ import { appendFile, mkdtemp, mkdir, rm, utimes, writeFile } from 'node:fs/promi
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
-import { LocalUsageEstimator, tokenUsageOf } from '../core/localUsage';
+import { LocalUsageEstimator } from '../../infrastructure/localUsageEstimator';
 
 const NOW = new Date(2026, 9, 7, 15, 0, 0);
 const TODAY = new Date(2026, 9, 7, 10, 0, 0).toISOString();
@@ -83,37 +83,5 @@ describe('LocalUsageEstimator', () => {
   it('returns undefined when the log directory is missing', async () => {
     const estimate = await new LocalUsageEstimator(join(root, 'nope')).estimateToday(NOW);
     assert.equal(estimate, undefined);
-  });
-});
-
-describe('tokenUsageOf', () => {
-  const since = new Date(2026, 9, 7);
-
-  it('ignores entries without usage or timestamp', () => {
-    assert.equal(tokenUsageOf({ message: {} }, since), undefined);
-    assert.equal(tokenUsageOf({ message: { usage: { input_tokens: 1 } } }, since), undefined);
-    assert.equal(tokenUsageOf(null, since), undefined);
-  });
-
-  it('does not collapse entries whose ids are not strings', () => {
-    const entry = (ts: string) => ({
-      timestamp: ts,
-      requestId: { nested: true },
-      message: { id: { nested: true }, usage: { input_tokens: 1 } },
-    });
-    const a = tokenUsageOf(entry(TODAY), since);
-    const b = tokenUsageOf(entry(new Date(2026, 9, 7, 11).toISOString()), since);
-    assert.ok(a && b);
-    assert.notEqual(a.key, b.key);
-  });
-
-  it('keys id-less entries by timestamp so they never collapse together', () => {
-    const a = tokenUsageOf({ timestamp: TODAY, message: { usage: { input_tokens: 1 } } }, since);
-    const b = tokenUsageOf(
-      { timestamp: new Date(2026, 9, 7, 11).toISOString(), message: { usage: { input_tokens: 1 } } },
-      since,
-    );
-    assert.ok(a && b);
-    assert.notEqual(a.key, b.key);
   });
 });

@@ -9,7 +9,7 @@ import { execFile } from 'child_process';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import type { AccessTokenProvider } from './contracts';
+import type { AccessTokenProvider } from '../application/ports';
 
 /** A place a Claude Code access token may be stored. */
 export interface TokenSource {

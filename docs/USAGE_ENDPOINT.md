@@ -86,6 +86,6 @@ During the backoff:
 1. Run **Tokenwatch: Show Log**. An unrecognised shape is logged as
    `Unrecognised usage response: {…}`, with the first 1,000 characters of the body.
 2. Compare that body with the response above, then add the new key names to the
-   `*_KEYS` lists at the top of `src/core/usageApi.ts`.
-3. Add a case for the new shape to `src/test/usageApi.test.ts`, and update this page and its
+   `*_KEYS` lists at the top of `src/domain/usageResponse.ts`.
+3. Add a case for the new shape to `src/test/domain/usageResponse.test.ts`, and update this page and its
    *Last confirmed* date.

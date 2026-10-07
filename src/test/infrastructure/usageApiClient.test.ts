@@ -12,8 +12,8 @@ import {
 } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { after, before, describe, it } from 'node:test';
-import { UsageApiError } from '../core/errors';
-import { UsageApiClient } from '../core/usageApi';
+import { UsageApiError } from '../../application/errors';
+import { UsageApiClient } from '../../infrastructure/usageApiClient';
 
 type Responder = (res: ServerResponse) => void;
 

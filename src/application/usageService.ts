@@ -6,10 +6,10 @@
  * the result.
  */
 
-import type { AccessTokenProvider, Logger, UsageEstimator, UsageFetcher } from './contracts';
+import { hasAnyWindow } from '../domain/usageResponse';
+import type { UsageState } from '../domain/types';
 import { UsageApiError } from './errors';
-import { hasAnyWindow } from './usageApi';
-import type { UsageState } from './types';
+import type { AccessTokenProvider, Logger, UsageEstimator, UsageFetcher } from './ports';
 
 /** Upper bound on how much of an unrecognised response body is written to the log. */
 const MAX_LOGGED_BODY_CHARS = 1_000;

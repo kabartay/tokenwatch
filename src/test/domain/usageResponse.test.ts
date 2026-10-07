@@ -4,7 +4,7 @@
 
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-import { hasAnyWindow, parseUsageResponse } from '../core/usageApi';
+import { hasAnyWindow, parseUsageResponse } from '../../domain/usageResponse';
 
 describe('parseUsageResponse', () => {
   it('parses the five_hour / seven_day shape', () => {

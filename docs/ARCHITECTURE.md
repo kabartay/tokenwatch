@@ -8,49 +8,82 @@ together and why they're shaped the way they are.
 
 ```
 src/
-├─ extension.ts      composition root: builds the objects, registers commands
-├─ core/             what to show (no `vscode` import, unit-tested)
-└─ vscode/           when to refresh and how to draw it
+├─ extension.ts      composition root: builds every object and wires the layers together
+├─ domain/           pure rules and data: types, pace and alerts, formatting, parsing
+├─ application/      use cases and ports: UsageService, RefreshPolicy, the interfaces they need
+├─ infrastructure/   adapters to the outside world: HTTP, Keychain and file reads
+└─ ui/               VS Code: status bar, timers and events, settings
 ```
 
-`src/core/` never imports `vscode`. That rule is what makes the logic testable with plain
-`node --test` and no VS Code test harness. Anything that needs an editor API belongs in
-`src/vscode/`.
+Dependencies point inward only:
 
 ```mermaid
 flowchart LR
-  subgraph vscode["src/vscode — when & how"]
-    C[UsageController<br/>timer · focus · config]
-    SB[UsageStatusBar<br/>renders a UsageState]
+  UI["ui/<br/><sub>VS Code</sub>"] --> APP
+  INFRA["infrastructure/<br/><sub>HTTP · Keychain · files</sub>"] --> APP
+  APP["application/<br/><sub>use cases · ports</sub>"] --> DOM["domain/<br/><sub>pure rules</sub>"]
+  UI --> DOM
+  INFRA --> DOM
+  ROOT["extension.ts"] -.->|"builds and connects"| UI & INFRA & APP
+```
+
+| Layer | May import | Must not import |
+| --- | --- | --- |
+| `domain/` | nothing outside itself | `application/`, `infrastructure/`, `ui/`, `vscode`, Node I/O modules |
+| `application/` | `domain/` | `infrastructure/`, `ui/`, `vscode`, Node I/O modules |
+| `infrastructure/` | `domain/`, `application/` (to implement its ports) | `ui/`, `vscode` |
+| `ui/` | `domain/`, `application/` | `infrastructure/` (it gets adapters through ports) |
+
+ESLint enforces every row (`eslint.config.ts`, `no-restricted-imports`), so an import across a
+boundary fails `npm run lint` and CI. The payoff is testing: everything in
+`domain/` and `application/` runs under plain `node --test` with in-memory fakes, no VS Code
+and no network.
+
+```mermaid
+flowchart LR
+  subgraph ui["ui/"]
+    C[UsageController<br/>timers · focus · config]
+    CM[ContextMonitor<br/>15 s poll]
+    SB[UsageStatusBar<br/>one line]
   end
-  subgraph core["src/core — what"]
+  subgraph application["application/"]
     S[UsageService.resolve]
+    P[RefreshPolicy<br/>backoff · stale · restore]
+  end
+  subgraph infrastructure["infrastructure/"]
     CS[CredentialStore]
     API[UsageApiClient]
     EST[LocalUsageEstimator]
+    CR[ContextReader]
   end
   C -- "resolve()" --> S
-  S --> CS
-  S --> API
-  S --> EST
-  S -- UsageState --> C
+  C -- "may I poll? what to show?" --> P
+  S --> CS & API & EST
+  CM --> CR
   C -- render --> SB
+  CM -- setContext --> SB
 ```
 
 | Module | Responsibility |
 | --- | --- |
-| `core/contracts.ts` | Interfaces `UsageService` depends on: `AccessTokenProvider`, `UsageFetcher`, `UsageEstimator`, `Logger`. |
-| `core/credentials.ts` | `TokenSource` implementations (Keychain, credentials file) and `CredentialStore`, which tries them in order. |
-| `core/usageApi.ts` | `UsageApiClient` (HTTP) and `parseUsageResponse` (pure). |
-| `core/localUsage.ts` | `LocalUsageEstimator`: incremental scan of session logs. |
-| `core/usageService.ts` | The refresh decision: live, fallback, or error. |
-| `core/contextUsage.ts` | `ContextReader`: context size from the tail of the newest session transcript. |
-| `vscode/contextMonitor.ts` | The separate `ctx %` item, its 15 s poll and tooltip. |
-| `core/insights.ts` | Pure derived views: progress bars, pace projection, alert level. |
-| `core/format.ts` | Pure formatting: percentages, durations, `↻` countdowns, token counts, one-line summaries. |
-| `vscode/controller.ts` | Polling timer, focus gating, live config reload, manual refresh. |
-| `vscode/statusBar.ts` | Turns a `UsageState` into text, colour and a Markdown tooltip. |
-| `vscode/config.ts` | Reads and clamps `tokenwatch.*` settings. |
+| `domain/types.ts` | Shared data: `UsageSnapshot`, `UsageState`, `ContextReading`, settings. |
+| `domain/usageResponse.ts` | Maps the endpoint's JSON onto a `UsageSnapshot`, tolerating renames. |
+| `domain/transcript.ts` | Parses transcript lines: context size of a reply, tokens of an entry, folder → directory name. |
+| `domain/contextWindow.ts` | Picks a model's context window (settings, prefix match, or 200k/1M inference). |
+| `domain/insights.ts` | Progress bars, pace projection, alert level. |
+| `domain/format.ts` | Percentages, durations, `↻` countdowns, token counts, one-line summaries. |
+| `application/ports.ts` | Interfaces the use cases need: tokens, quota, estimates, context, storage, logging. |
+| `application/usageService.ts` | The refresh decision: live, fallback, or error; maps failures to backoff. |
+| `application/refreshPolicy.ts` | When a request may go out, what to show while it can't, and what survives a reload. |
+| `application/errors.ts` | `UsageApiError`, the error contract of the quota port. |
+| `infrastructure/usageApiClient.ts` | HTTPS request, status codes, `Retry-After`. |
+| `infrastructure/credentials.ts` | Keychain and credentials-file token sources, tried in order. |
+| `infrastructure/localUsageEstimator.ts` | Incremental scan of today's session logs. |
+| `infrastructure/contextReader.ts` | Tail-reads the newest transcript for this window's folders. |
+| `ui/controller.ts` | Quota timer, focus gating, settings reload, manual refresh and notifications. |
+| `ui/contextMonitor.ts` | The 15 s context poll. |
+| `ui/statusBar.ts` | Renders quota and context as one line, with colours and a Markdown tooltip. |
+| `ui/config.ts` | Reads and clamps `tokenwatch.*` settings. |
 
 ## The refresh decision
 
@@ -72,7 +105,7 @@ problem the user can actually fix.
 
 ## Alert levels
 
-`assess()` in `core/insights.ts` turns a snapshot into one of four levels. The status bar can
+`assess()` in `domain/insights.ts` turns a snapshot into one of four levels. The status bar can
 only colour text and use two background colours, so each level maps onto one of these:
 
 | Level | When | Shown as |
@@ -131,14 +164,15 @@ on roughly every other request in practice; the limit appears to be per account 
 Claude Code itself, so the default interval is 180s. On a 429, `UsageApiClient` parses
 `Retry-After` (seconds, or an HTTP date) onto `UsageApiError`, and `UsageService` sets
 `retryAfterSeconds` to that value or 180s, whichever is longer. Honouring the header alone
-never engaged the backoff, because the server sends `Retry-After: 0`. `UsageController` then
-skips every poll until the backoff ends, including manual refreshes, which report the wait
+never engaged the backoff, because the server sends `Retry-After: 0`. `RefreshPolicy` then
+holds every poll until the backoff ends, including manual refreshes, which report the wait
 instead of drawing another 429. Meanwhile it keeps rendering the last live snapshot, if under
 30 minutes old, marked `staleReason: 'rate-limited'`, rather than switching to the local token
 count.
 
-**The last numbers and the backoff survive a reload.** `UsageController` saves the last good
-response body, its fetch time and the backoff deadline in `globalState`. On activation it
+**The last numbers and the backoff survive a reload.** `RefreshPolicy` saves the last good
+response body, its fetch time and the backoff deadline through the `KeyValueStore` port
+(VS Code's `globalState` in production, an in-memory map in tests). On activation it
 restores them: the line appears at once, a running backoff isn't reset, and no request is
 sent while the saved numbers are newer than the poll interval. Before this, every reload sent
 a request immediately, which was the most common source of 429s.
@@ -158,9 +192,13 @@ what touches their credentials without reading a dependency tree.
 
 ## Extending
 
-- **New credential location:** implement `TokenSource` in `core/credentials.ts` and add it
+- **New credential location:** implement `TokenSource` in `infrastructure/credentials.ts` and add it
   to `CredentialStore.forPlatform`.
 - **New quota window** (for example a per-model weekly limit): add an optional field to
-  `UsageSnapshot`, parse it in `parseUsageResponse`, and render it in `statusBar.ts`.
+  `UsageSnapshot` (`domain/types.ts`), parse it in `domain/usageResponse.ts`, and render it in
+  `ui/statusBar.ts`.
+- **New data source** (say, another editor's logs): add a port to `application/ports.ts`,
+  implement it in `infrastructure/`, and wire it in `extension.ts`. Nothing in `domain/` or
+  `application/` needs to know where the data comes from.
 - **New status bar state:** add a variant to `UsageState`. TypeScript then flags every
   `switch` that doesn't handle it.

@@ -6,10 +6,25 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-10-08
+
+### Changed
+
+- Renamed for the Marketplace, where another extension already uses the name `tokenwatch`. The
+  display name is now **Tokenwatch for Claude Code** and the extension ID
+  `kabartay.tokenwatchclaude`. The repository moved to
+  [kabartay/tokenwatchclaude](https://github.com/kabartay/tokenwatchclaude); old links redirect.
+  Settings (`tokenwatch.*`) and commands are unchanged.
+
+### Upgrading from 1.0.0 or earlier
+
+The new ID makes this a separate extension to VS Code. Uninstall the old **Tokenwatch**
+(`kabartay.tokenwatch`) so two copies don't run side by side. Your settings carry over.
+
 ## [1.0.0] — 2026-10-08
 
 The first stable release, and the first published on the
-[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=kabartay.tokenwatch).
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=kabartay.tokenwatchclaude).
 From here on, versions follow Semantic Versioning: a change that breaks a setting or existing
 behaviour means a new major version.
 
@@ -170,16 +185,17 @@ behaviour means a new major version.
 
 - Initial release.
 
-[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/kabartay/tokenwatch/compare/v0.5.3...v1.0.0
-[0.5.3]: https://github.com/kabartay/tokenwatch/compare/v0.5.2...v0.5.3
-[0.5.2]: https://github.com/kabartay/tokenwatch/compare/v0.5.1...v0.5.2
-[0.5.1]: https://github.com/kabartay/tokenwatch/compare/v0.5.0...v0.5.1
-[0.5.0]: https://github.com/kabartay/tokenwatch/compare/v0.4.2...v0.5.0
-[0.4.2]: https://github.com/kabartay/tokenwatch/compare/v0.4.1...v0.4.2
-[0.4.1]: https://github.com/kabartay/tokenwatch/compare/v0.4.0...v0.4.1
-[0.4.0]: https://github.com/kabartay/tokenwatch/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/kabartay/tokenwatch/compare/v0.2.1...v0.3.0
-[0.2.1]: https://github.com/kabartay/tokenwatch/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/kabartay/tokenwatch/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/kabartay/tokenwatch/releases/tag/v0.1.0
+[Unreleased]: https://github.com/kabartay/tokenwatchclaude/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/kabartay/tokenwatchclaude/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/kabartay/tokenwatchclaude/compare/v0.5.3...v1.0.0
+[0.5.3]: https://github.com/kabartay/tokenwatchclaude/compare/v0.5.2...v0.5.3
+[0.5.2]: https://github.com/kabartay/tokenwatchclaude/compare/v0.5.1...v0.5.2
+[0.5.1]: https://github.com/kabartay/tokenwatchclaude/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/kabartay/tokenwatchclaude/compare/v0.4.2...v0.5.0
+[0.4.2]: https://github.com/kabartay/tokenwatchclaude/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/kabartay/tokenwatchclaude/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/kabartay/tokenwatchclaude/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/kabartay/tokenwatchclaude/compare/v0.2.1...v0.3.0
+[0.2.1]: https://github.com/kabartay/tokenwatchclaude/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/kabartay/tokenwatchclaude/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/kabartay/tokenwatchclaude/releases/tag/v0.1.0

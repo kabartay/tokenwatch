@@ -3,7 +3,7 @@
 # Usage: scripts/install.sh [owner/repo]    Requires: gh (authenticated), code.
 set -euo pipefail
 
-REPO="${1:-kabartay/tokenwatch}"
+REPO="${1:-kabartay/tokenwatchclaude}"
 
 for cmd in gh code; do
   command -v "$cmd" >/dev/null || { echo "error: '$cmd' not found on PATH" >&2; exit 1; }

@@ -10,9 +10,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/kabartay/tokenwatch/actions/workflows/ci.yml"><img src="https://github.com/kabartay/tokenwatch/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=kabartay.tokenwatch"><img src="https://img.shields.io/visual-studio-marketplace/v/kabartay.tokenwatch?label=Marketplace&color=blue" alt="VS Code Marketplace"></a>
-  <a href="https://github.com/kabartay/tokenwatch/releases/latest"><img src="https://img.shields.io/github/v/release/kabartay/tokenwatch?color=blue" alt="Release"></a>
+  <a href="https://github.com/kabartay/tokenwatchclaude/actions/workflows/ci.yml"><img src="https://github.com/kabartay/tokenwatchclaude/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=kabartay.tokenwatchclaude"><img src="https://img.shields.io/visual-studio-marketplace/v/kabartay.tokenwatchclaude?label=Marketplace&color=blue" alt="VS Code Marketplace"></a>
+  <a href="https://github.com/kabartay/tokenwatchclaude/releases/latest"><img src="https://img.shields.io/github/v/release/kabartay/tokenwatchclaude?color=blue" alt="Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT"></a>
   <a href="package.json"><img src="https://img.shields.io/badge/VS%20Code-%E2%89%A51.85-007ACC.svg?logo=visualstudiocode" alt="VS Code 1.85+"></a>
   <a href="tsconfig.json"><img src="https://img.shields.io/badge/TypeScript-strict-3178C6.svg?logo=typescript&logoColor=white" alt="TypeScript strict"></a>
@@ -51,17 +51,17 @@ Hover over it for the details: both quota windows with their reset times and a p
 
 In VS Code, open Extensions (`Cmd+Shift+X`), search for **Tokenwatch**, and click **Install**.
 Or install it from the
-[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=kabartay.tokenwatch),
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=kabartay.tokenwatchclaude),
 or from a terminal:
 
 ```bash
-code --install-extension kabartay.tokenwatch
+code --install-extension kabartay.tokenwatchclaude
 ```
 
 Installed this way, VS Code keeps it up to date.
 
-**Without the Marketplace:** download `tokenwatch-<version>.vsix` from the
-[latest GitHub release](https://github.com/kabartay/tokenwatch/releases/latest), then in
+**Without the Marketplace:** download `tokenwatchclaude-<version>.vsix` from the
+[latest GitHub release](https://github.com/kabartay/tokenwatchclaude/releases/latest), then in
 Extensions click **`···`** → **Install from VSIX…**. With the `gh` CLI, `scripts/install.sh`
 does both steps. These installs don't update automatically.
 

@@ -30,7 +30,7 @@ How to read it:
 The same log is saved on disk, so you can read it without opening VS Code:
 
 ```text
-~/Library/Application Support/Code/logs/<session>/window<N>/exthost/kabartay.tokenwatch/Tokenwatch.log
+~/Library/Application Support/Code/logs/<session>/window<N>/exthost/kabartay.tokenwatchclaude/Tokenwatch.log
 ```
 
 On Linux the base folder is `~/.config/Code/logs`, and on Windows it's `%APPDATA%\Code\logs`.
@@ -124,7 +124,7 @@ tooltip shows when they were fetched. Outside a backoff, clicking the item refre
 
 ## Reporting a bug
 
-Use the [bug report form](https://github.com/kabartay/tokenwatch/issues/new?template=bug_report.yml)
+Use the [bug report form](https://github.com/kabartay/tokenwatchclaude/issues/new?template=bug_report.yml)
 and paste the last few log lines. The log never contains your token, but it can contain folder
 paths and, for an unrecognised response, the endpoint's reply, so check it before you post.
 For security issues, see [SECURITY.md](SECURITY.md#reporting-a-vulnerability) instead.

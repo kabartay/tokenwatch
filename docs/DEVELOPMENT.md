@@ -6,8 +6,8 @@ Requirements: Node.js 22 (the version CI uses), VS Code 1.85 or newer, and, for 
 GitHub CLI (`gh`).
 
 ```bash
-git clone https://github.com/kabartay/tokenwatch.git
-cd tokenwatch
+git clone https://github.com/kabartay/tokenwatchclaude.git
+cd tokenwatchclaude
 npm ci
 ```
 
@@ -26,13 +26,13 @@ window with `Cmd+R` (macOS) or `Ctrl+R`.
 | `npm run lint` | ESLint with type-aware rules and the layer boundaries. |
 | `npm run typecheck` | `tsc --noEmit` under strict settings. |
 | `npm run watch` | Recompile on every save. |
-| `npm run package` | Build `tokenwatch-<version>.vsix` locally. |
+| `npm run package` | Build `tokenwatchclaude-<version>.vsix` locally. |
 
 To try a local build in your everyday VS Code:
 
 ```bash
 npm run package
-code --install-extension tokenwatch-*.vsix --force
+code --install-extension tokenwatchclaude-*.vsix --force
 ```
 
 If `code` isn't found, run **Shell Command: Install 'code' command in PATH** from the command
@@ -94,7 +94,7 @@ Extension Development Host (F5) and check:
   change writes one line. To also see what was restored after a reload, run **Developer: Set
   Log Level…** → **Tokenwatch** → **Debug**.
 - **The log on disk.**
-  `~/Library/Application Support/Code/logs/<session>/window<N>/exthost/kabartay.tokenwatch/Tokenwatch.log`
+  `~/Library/Application Support/Code/logs/<session>/window<N>/exthost/kabartay.tokenwatchclaude/Tokenwatch.log`
   on macOS; the base folder is `~/.config/Code/logs` on Linux and `%APPDATA%\Code\logs` on
   Windows.
 - **Breakpoints.** F5 attaches the debugger to the Extension Development Host, so breakpoints

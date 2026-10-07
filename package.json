@@ -1,8 +1,8 @@
 {
-  "name": "tokenwatch",
-  "displayName": "Tokenwatch",
+  "name": "tokenwatchclaude",
+  "displayName": "Tokenwatch for Claude Code",
   "description": "Live Claude Code quota in your status bar: 5-hour session and weekly usage with reset countdowns.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "kabartay",
   "icon": "images/icon.png",
   "galleryBanner": {
@@ -12,13 +12,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kabartay/tokenwatch.git"
+    "url": "https://github.com/kabartay/tokenwatchclaude.git"
   },
   "bugs": {
-    "url": "https://github.com/kabartay/tokenwatch/issues"
+    "url": "https://github.com/kabartay/tokenwatchclaude/issues"
   },
-  "homepage": "https://github.com/kabartay/tokenwatch#readme",
-  "qna": "https://github.com/kabartay/tokenwatch/issues",
+  "homepage": "https://github.com/kabartay/tokenwatchclaude#readme",
+  "qna": "https://github.com/kabartay/tokenwatchclaude/issues",
   "keywords": [
     "claude",
     "claude-code",

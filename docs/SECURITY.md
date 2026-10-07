@@ -59,5 +59,5 @@ not share.
 ## Reporting a vulnerability
 
 Please report security issues privately through
-[GitHub's private vulnerability reporting](https://github.com/kabartay/tokenwatch/security/advisories/new),
+[GitHub's private vulnerability reporting](https://github.com/kabartay/tokenwatchclaude/security/advisories/new),
 not as a public issue.

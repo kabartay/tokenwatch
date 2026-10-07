@@ -16,7 +16,10 @@ Tokenwatch handles your Claude Code login, so this page states exactly what it t
   `Authorization` header. If you set VS Code's `http.proxy`, the request goes through that
   proxy like any other VS Code extension traffic.
 - The token is re-read for each poll and is held in memory only while that request runs.
-- **Nothing is written to disk except the Tokenwatch log.**
+- **Nothing is written to disk except the Tokenwatch log and one small record in VS Code's
+  extension storage**: the last usage response (percentages and reset times), when it was
+  fetched, and the rate-limit backoff deadline. It lets a reloaded window show your numbers
+  at once without sending a request. It never contains the token.
 
 ## What the log contains
 

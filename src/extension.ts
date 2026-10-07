@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext): void {
     estimator: new LocalUsageEstimator(),
     log,
   });
-  const controller = new UsageController({ service, statusBar, log });
+  const controller = new UsageController({ service, statusBar, log, storage: context.globalState });
   const contextMonitor = new ContextMonitor(new ContextReader(), statusBar, log);
 
   context.subscriptions.push(

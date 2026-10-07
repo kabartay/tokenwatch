@@ -6,6 +6,15 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-10-07
+
+### Fixed
+
+- After a window reload the status bar shows your last numbers at once, instead of `~1.5M tok
+  today` until the next successful poll. A reload no longer sends a request that's likely to be
+  rate-limited, and no longer resets a running backoff. The last response and backoff deadline
+  are kept in VS Code's extension storage (never the token).
+
 ## [0.4.0] — 2026-10-07
 
 ### Fixed
@@ -96,7 +105,8 @@ All notable changes to Tokenwatch. The format follows
 
 - Initial release.
 
-[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/kabartay/tokenwatch/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/kabartay/tokenwatch/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/kabartay/tokenwatch/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/kabartay/tokenwatch/compare/v0.2.0...v0.2.1

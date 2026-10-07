@@ -6,6 +6,7 @@
 
 import * as vscode from 'vscode';
 import { formatDuration, summarizeState } from '../core/format';
+import { hasAnyWindow, parseUsageResponse } from '../core/usageApi';
 import type { UsageService } from '../core/usageService';
 import type { TokenwatchConfig, UsageState } from '../core/types';
 
@@ -13,6 +14,16 @@ import type { TokenwatchConfig, UsageState } from '../core/types';
 const KEEP_LAST_LIVE_MS = 30 * 60 * 1_000;
 
 type LiveState = Extract<UsageState, { kind: 'live' }>;
+
+/** `globalState` key: the last good response and the backoff deadline, kept across reloads. */
+const PERSIST_KEY = 'tokenwatch.lastQuota';
+
+/** What survives a reload. The raw body is stored, not the parsed snapshot, so Dates round-trip. */
+interface PersistedQuota {
+  readonly raw?: unknown;
+  readonly fetchedAt?: string;
+  readonly backoffUntil?: number;
+}
 import { CONFIG_SECTION, readConfig } from './config';
 import type { UsageStatusBar } from './statusBar';
 
@@ -22,6 +33,12 @@ export interface UsageControllerDeps {
   readonly statusBar: UsageStatusBar;
   /** Diagnostics sink; never receives the access token. */
   readonly log: vscode.LogOutputChannel;
+  /**
+   * Extension `globalState`. Holds the last response body (usage percentages and reset times,
+   * never the token) and the backoff deadline, so a reload neither blanks the line nor sends a
+   * request that the server would just rate-limit.
+   */
+  readonly storage: vscode.Memento;
 }
 
 /**
@@ -54,10 +71,16 @@ export class UsageController implements vscode.Disposable {
     );
   }
 
-  /** Performs the first refresh and starts the polling timer. */
+  /**
+   * Restores the last numbers and backoff from before a reload, then starts polling.
+   *
+   * The first request is skipped while a backoff is still running or while the restored
+   * numbers are newer than the poll interval.
+   */
   start(): void {
+    this.restore();
     this.schedule();
-    void this.refresh();
+    if (this.isPastBackoff() && this.isStale()) void this.refresh();
   }
 
   /**
@@ -120,6 +143,7 @@ export class UsageController implements vscode.Disposable {
     this.deps.log.info(summarizeState(state));
     this.applyBackoff(state);
     if (state.kind === 'live') this.lastLive = state;
+    this.persist(state);
     this.state = this.keepLastLiveIfRateLimited(state);
     this.deps.statusBar.render(this.state, this.config);
   }
@@ -128,6 +152,37 @@ export class UsageController implements vscode.Disposable {
    * While rate-limited, recent real numbers beat today's local token count, so the last good
    * snapshot stays on screen (marked stale) instead of the fallback.
    */
+  private restore(): void {
+    const saved = this.deps.storage.get<PersistedQuota>(PERSIST_KEY);
+    if (!saved) return;
+    if (typeof saved.backoffUntil === 'number' && saved.backoffUntil > Date.now()) {
+      this.backoffUntil = saved.backoffUntil;
+      this.deps.log.info(`Restored backoff: next request in ${formatDuration(this.backoffUntil - Date.now())}`);
+    }
+    const fetchedAt = saved.fetchedAt ? new Date(saved.fetchedAt) : undefined;
+    if (!fetchedAt || Number.isNaN(fetchedAt.getTime())) return;
+    const age = Date.now() - fetchedAt.getTime();
+    if (age > KEEP_LAST_LIVE_MS) return;
+    const snapshot = parseUsageResponse(saved.raw);
+    if (!hasAnyWindow(snapshot)) return;
+
+    this.lastLive = { kind: 'live', snapshot, fetchedAt };
+    this.lastRefreshAt = fetchedAt.getTime();
+    const fresh = age < this.config.pollIntervalSeconds * 1_000;
+    this.state = fresh ? this.lastLive : { ...this.lastLive, staleReason: 'from before reload' };
+    this.deps.log.info(`Restored quota from ${fetchedAt.toISOString()}: ${summarizeState(this.state)}`);
+    this.deps.statusBar.render(this.state, this.config);
+  }
+
+  private persist(state: UsageState): void {
+    const saved: PersistedQuota = {
+      raw: state.kind === 'live' ? state.snapshot.raw : this.lastLive?.snapshot.raw,
+      fetchedAt: (state.kind === 'live' ? state.fetchedAt : this.lastLive?.fetchedAt)?.toISOString(),
+      backoffUntil: this.backoffUntil,
+    };
+    void this.deps.storage.update(PERSIST_KEY, saved);
+  }
+
   private keepLastLiveIfRateLimited(state: UsageState): UsageState {
     const rateLimited = (state.kind === 'fallback' || state.kind === 'error') && state.retryAfterSeconds;
     if (!rateLimited || !this.lastLive) return state;

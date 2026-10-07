@@ -137,6 +137,12 @@ instead of drawing another 429. Meanwhile it keeps rendering the last live snaps
 30 minutes old, marked `staleReason: 'rate-limited'`, rather than switching to the local token
 count.
 
+**The last numbers and the backoff survive a reload.** `UsageController` saves the last good
+response body, its fetch time and the backoff deadline in `globalState`. On activation it
+restores them: the line appears at once, a running backoff isn't reset, and no request is
+sent while the saved numbers are newer than the poll interval. Before this, every reload sent
+a request immediately, which was the most common source of 429s.
+
 **The local fallback is incremental.** A single session log can exceed 100 MB, and one
 measured day touched 1.1 GB across 28 files. The estimator keeps a byte offset per file and
 reads only the appended tail. Measured on that day, the first scan took 2.2 s and later

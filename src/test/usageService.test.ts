@@ -7,7 +7,7 @@ import { describe, it } from 'node:test';
 import type { AccessTokenProvider, Logger, UsageEstimator, UsageFetcher } from '../core/contracts';
 import { UsageApiError } from '../core/errors';
 import { parseUsageResponse } from '../core/usageApi';
-import { describeFailure, UsageService } from '../core/usageService';
+import { describeFailure, rateLimitBackoffSeconds, UsageService } from '../core/usageService';
 import type { LocalUsageEstimate, UsageSnapshot } from '../core/types';
 
 const TOKEN = 'sk-ant-oat01-SECRET';
@@ -65,7 +65,7 @@ describe('UsageService.resolve', () => {
     assert.equal(fetched, false);
   });
 
-  it('falls back with an actionable reason on 401', async () => {
+  it('falls back with an actionable reason on 401, and no backoff', async () => {
     const { service } = setup({
       fetch: async () => {
         throw new UsageApiError('HTTP 401: unauthorized', 401);
@@ -76,7 +76,31 @@ describe('UsageService.resolve', () => {
       kind: 'fallback',
       estimate: ESTIMATE,
       reason: 'login rejected — run `claude` to refresh it',
+      retryAfterSeconds: undefined,
     });
+  });
+
+  it('carries the server Retry-After into the fallback state', async () => {
+    const { service } = setup({
+      fetch: async () => {
+        throw new UsageApiError('HTTP 429: slow down', 429, 42);
+      },
+      estimate: ESTIMATE,
+    });
+    const state = await service.resolve(NOW);
+    assert.equal(state.kind, 'fallback');
+    assert.equal(state.kind === 'fallback' && state.retryAfterSeconds, 42);
+  });
+
+  it('falls back to a default backoff on 429 without a Retry-After header', async () => {
+    const { service } = setup({
+      fetch: async () => {
+        throw new UsageApiError('HTTP 429: slow down', 429);
+      },
+      estimate: ESTIMATE,
+    });
+    const state = await service.resolve(NOW);
+    assert.equal(state.kind === 'fallback' && state.retryAfterSeconds, 180);
   });
 
   it('falls back and logs the body when the response shape is unrecognised', async () => {
@@ -98,6 +122,7 @@ describe('UsageService.resolve', () => {
     assert.deepEqual(await service.resolve(NOW), {
       kind: 'error',
       message: 'Timed out after 10000 ms',
+      retryAfterSeconds: undefined,
     });
   });
 
@@ -127,5 +152,14 @@ describe('describeFailure', () => {
     assert.equal(describeFailure(new UsageApiError('HTTP 502: bad gateway', 502)), 'HTTP 502: bad gateway');
     assert.equal(describeFailure(new Error('boom')), 'boom');
     assert.equal(describeFailure('plain'), 'plain');
+  });
+});
+
+describe('rateLimitBackoffSeconds', () => {
+  it('uses the server value when given, else the default, and nothing for other failures', () => {
+    assert.equal(rateLimitBackoffSeconds(new UsageApiError('x', 429, 5)), 5);
+    assert.equal(rateLimitBackoffSeconds(new UsageApiError('x', 429)), 180);
+    assert.equal(rateLimitBackoffSeconds(new UsageApiError('x', 500)), undefined);
+    assert.equal(rateLimitBackoffSeconds(new Error('boom')), undefined);
   });
 });

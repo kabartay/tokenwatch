@@ -90,7 +90,13 @@ export class UsageApiClient implements UsageFetcher {
             const body = Buffer.concat(chunks).toString('utf8');
             const status = res.statusCode ?? 0;
             if (status < 200 || status >= 300) {
-              reject(new UsageApiError(`HTTP ${status}: ${body.slice(0, 200)}`, status));
+              reject(
+                new UsageApiError(
+                  `HTTP ${status}: ${body.slice(0, 200)}`,
+                  status,
+                  parseRetryAfter(res.headers['retry-after']),
+                ),
+              );
               return;
             }
             try {
@@ -167,4 +173,17 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 function isFiniteNumber(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v);
+}
+
+/**
+ * Parses a `Retry-After` header, which is seconds (`"30"`) or an HTTP date.
+ *
+ * @returns Seconds to wait, floored at 0, or `undefined` if absent or unparseable.
+ */
+function parseRetryAfter(header: string | string[] | undefined): number | undefined {
+  const value = Array.isArray(header) ? header[0] : header;
+  if (!value) return undefined;
+  if (/^\d+$/.test(value)) return Number(value);
+  const at = Date.parse(value);
+  return Number.isNaN(at) ? undefined : Math.max(0, Math.round((at - Date.now()) / 1_000));
 }

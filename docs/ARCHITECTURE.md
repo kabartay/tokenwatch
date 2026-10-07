@@ -123,6 +123,13 @@ refreshes immediately if its data is older than the interval.
 **Concurrent refreshes share one in-flight promise.** A click during a timer tick, or a
 focus event during a slow request, never sends a second request.
 
+**A 429 backs off instead of retrying on cadence.** Polling at the default interval has drawn
+a 429 on roughly every other request in practice, so the endpoint's own limit is tighter than
+assumed. `UsageApiClient` parses `Retry-After` (seconds, or an HTTP date) onto `UsageApiError`;
+`UsageService` turns that into `retryAfterSeconds` on the `fallback`/`error` state, defaulting
+to 180s when the server didn't send one; `UsageController` skips scheduled polls until that
+time passes. A manual refresh is never held back by this, only the timer is.
+
 **The local fallback is incremental.** A single session log can exceed 100 MB, and one
 measured day touched 1.1 GB across 28 files. The estimator keeps a byte offset per file and
 reads only the appended tail. Measured on that day, the first scan took 2.2 s and later

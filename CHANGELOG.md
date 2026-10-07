@@ -6,6 +6,12 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- A 429 from the usage endpoint no longer retries on the normal poll interval, which could
+  draw another 429 immediately. It now backs off, honouring a `Retry-After` header when the
+  server sends one and otherwise waiting 180s. Manual refreshes are unaffected.
+
 ### Added
 
 - Mini progress bars in the status bar: `5h ▰▱▱▱▱ 9% · wk ▰▰▱▱▱ 41%`.

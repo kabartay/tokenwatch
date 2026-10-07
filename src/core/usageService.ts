@@ -14,6 +14,15 @@ import type { UsageState } from './types';
 /** Upper bound on how much of an unrecognised response body is written to the log. */
 const MAX_LOGGED_BODY_CHARS = 1_000;
 
+/**
+ * Backoff used on a 429 when the server didn't send `Retry-After`.
+ *
+ * Observed in practice: polling `/usage` every 60s drew a 429 on roughly every other request,
+ * so the endpoint's own limit is tighter than one request per minute. This waits well past
+ * that before trying again.
+ */
+const DEFAULT_RATE_LIMIT_BACKOFF_SECONDS = 180;
+
 /** Collaborators of {@link UsageService}. */
 export interface UsageServiceDeps {
   readonly credentials: AccessTokenProvider;
@@ -45,6 +54,7 @@ export class UsageService {
     }
 
     let reason: string;
+    let retryAfterSeconds: number | undefined;
     try {
       const snapshot = await api.fetchUsage(token);
       if (hasAnyWindow(snapshot)) return { kind: 'live', snapshot, fetchedAt: now };
@@ -54,12 +64,26 @@ export class UsageService {
       );
     } catch (err) {
       reason = describeFailure(err);
+      retryAfterSeconds = rateLimitBackoffSeconds(err);
       log.warn(`Usage request failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     const estimate = await estimator.estimateToday(now);
-    return estimate ? { kind: 'fallback', estimate, reason } : { kind: 'error', message: reason };
+    return estimate
+      ? { kind: 'fallback', estimate, reason, retryAfterSeconds }
+      : { kind: 'error', message: reason, retryAfterSeconds };
   }
+}
+
+/**
+ * How long to back off after a failure, if it was a rate limit.
+ *
+ * @returns Seconds to wait, or `undefined` for a failure that isn't a rate limit, which the
+ *   normal poll interval already handles.
+ */
+export function rateLimitBackoffSeconds(err: unknown): number | undefined {
+  if (!(err instanceof UsageApiError) || !err.isRateLimited) return undefined;
+  return err.retryAfterSeconds ?? DEFAULT_RATE_LIMIT_BACKOFF_SECONDS;
 }
 
 /**

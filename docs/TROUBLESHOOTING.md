@@ -77,7 +77,7 @@ reason:
 | Log says | Do this |
 | --- | --- |
 | `HTTP 401` / *login rejected* | Run any `claude` command to refresh the token, then click the item. |
-| `HTTP 429` / *rate-limited* | Raise `tokenwatch.pollIntervalSeconds`, or close extra VS Code windows. |
+| `HTTP 429` / *rate-limited* | Tokenwatch backs off automatically (180s, or the server's `Retry-After`). If it keeps happening, close extra VS Code windows, since each polls independently. |
 | `Timed out after 10000 ms` | Network or proxy problem. Check VS Code's `http.proxy` setting. |
 | `Unrecognised usage response: {…}` | The endpoint changed. See [USAGE_ENDPOINT.md](USAGE_ENDPOINT.md#when-it-breaks) and open an issue with that line. |
 

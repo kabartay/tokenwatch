@@ -52,5 +52,15 @@ export type UsageState =
   | { readonly kind: 'loading' }
   | { readonly kind: 'noCredentials' }
   | { readonly kind: 'live'; readonly snapshot: UsageSnapshot; readonly fetchedAt: Date }
-  | { readonly kind: 'fallback'; readonly estimate: LocalUsageEstimate; readonly reason: string }
-  | { readonly kind: 'error'; readonly message: string };
+  | {
+      readonly kind: 'fallback';
+      readonly estimate: LocalUsageEstimate;
+      readonly reason: string;
+      /** Seconds to wait before polling again, when the server asked to back off. */
+      readonly retryAfterSeconds?: number;
+    }
+  | {
+      readonly kind: 'error';
+      readonly message: string;
+      readonly retryAfterSeconds?: number;
+    };

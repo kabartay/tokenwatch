@@ -62,8 +62,18 @@ in case of renames.
 | 200 with known fields | live quota | — |
 | 200 with unknown fields | fallback, *unrecognised response* | The endpoint changed shape. |
 | 401 / 403 | fallback, *login rejected* | Token expired or revoked. Run `claude`. |
-| 429 | fallback, *rate-limited* | Polling too often. Raise the interval. |
+| 429 | fallback, *rate-limited* | The endpoint's own limit is tighter than the poll interval. Tokenwatch backs off automatically (see below); no action needed unless it persists. |
 | other / timeout (10 s) | fallback with the HTTP status or error | Outage or network problem. |
+
+## Rate limits
+
+A poll that gets a 429 backs off automatically: it honours a `Retry-After` header if the
+server sends one, or waits 180s otherwise, before polling again. In practice, polling every
+60s has drawn a 429 on roughly every other request, so the endpoint's own limit is tighter
+than one request per minute.
+
+Manual refreshes (clicking the item, or the command) are never blocked by this backoff, only
+the automatic timer is.
 
 ## When it breaks
 

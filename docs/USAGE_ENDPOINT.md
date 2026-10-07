@@ -71,9 +71,9 @@ Polling every 60s drew a 429 on roughly every other request, so the limit is tig
 request per minute. It appears to be per account and shared with Claude Code itself, which
 calls the same endpoint. Tokenwatch therefore polls every 180s by default.
 
-After a 429 it waits at least 180s, longer if `Retry-After` asks for more. Honouring
-`Retry-After` alone never engaged the backoff in practice, most likely because the server sent
-`0`. The log line for each 429 includes the header value when one was sent.
+After a 429 it waits at least 180s, longer if `Retry-After` asks for more. The server
+sends `Retry-After: 0` with its 429s (confirmed 2026-10-07), so honouring the header alone
+never engaged the backoff. The log line for each 429 includes the header value when one was sent.
 
 During the backoff:
 

@@ -18,7 +18,7 @@ const MAX_LOGGED_BODY_CHARS = 1_000;
  * Minimum backoff after a 429.
  *
  * Observed in practice: polling every 60s drew a 429 on roughly every other request, and backoff
- * never engaged when it honoured `Retry-After` alone (most likely the server sent `0`). So a
+ * never engaged when it honoured `Retry-After` alone, because the server sends `0`. So a
  * server value can lengthen the wait but never shorten it below this.
  */
 const MIN_RATE_LIMIT_BACKOFF_SECONDS = 180;

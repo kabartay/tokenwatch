@@ -131,7 +131,7 @@ on roughly every other request in practice; the limit appears to be per account 
 Claude Code itself, so the default interval is 180s. On a 429, `UsageApiClient` parses
 `Retry-After` (seconds, or an HTTP date) onto `UsageApiError`, and `UsageService` sets
 `retryAfterSeconds` to that value or 180s, whichever is longer. Honouring the header alone
-never engaged the backoff in practice (most likely the server sent `0`). `UsageController` then
+never engaged the backoff, because the server sends `Retry-After: 0`. `UsageController` then
 skips every poll until the backoff ends, including manual refreshes, which report the wait
 instead of drawing another 429. Meanwhile it keeps rendering the last live snapshot, if under
 30 minutes old, marked `staleReason: 'rate-limited'`, rather than switching to the local token

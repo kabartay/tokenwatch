@@ -6,6 +6,14 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-10-07
+
+### Changed
+
+- The log reads like the status bar: every entry is the one line, for example
+  `5h 24% ↻2h 2m · wk 44% · ctx: 61%`. The detailed `Context: 61% (model, tokens, …)` entries
+  every 15 seconds are gone; a line is written on each quota refresh and when `ctx` changes.
+
 ## [0.5.0] — 2026-10-07
 
 ### Changed
@@ -129,7 +137,8 @@ All notable changes to Tokenwatch. The format follows
 
 - Initial release.
 
-[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/kabartay/tokenwatch/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/kabartay/tokenwatch/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/kabartay/tokenwatch/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/kabartay/tokenwatch/compare/v0.4.0...v0.4.1

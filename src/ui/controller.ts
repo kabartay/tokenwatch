@@ -117,17 +117,16 @@ export class UsageController implements vscode.Disposable {
       // The service handles expected failures; this guards against bugs leaving a stale item.
       resolved = { kind: 'error', message: err instanceof Error ? err.message : String(err) };
     }
-    this.deps.log.info(summarizeState(resolved));
+    this.deps.log.info(this.deps.statusBar.summary(resolved) ?? summarizeState(resolved));
     const { shown, backoffSeconds } = this.deps.policy.record(resolved);
     if (backoffSeconds) this.deps.log.info(`Backing off polling for ${backoffSeconds}s after a rate limit`);
     this.state = shown;
     this.deps.statusBar.render(this.state, this.config);
   }
 
-  /** What the status bar shows, as one line for a notification: quota, then `ctx` if any. */
+  /** What the status bar shows, as one line for a notification. */
   private notificationText(): string {
-    const context = this.deps.statusBar.contextLabel();
-    return `Tokenwatch: ${summarizeState(this.state)}${context ? ` · ${context}` : ''}`;
+    return `Tokenwatch: ${this.deps.statusBar.summary() ?? summarizeState(this.state)}`;
   }
 
   private async notify(message: string, ok: boolean): Promise<void> {

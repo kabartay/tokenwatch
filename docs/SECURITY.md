@@ -25,7 +25,7 @@ Tokenwatch handles your Claude Code login, so this page states exactly what it t
 
 The **Tokenwatch** output channel, which VS Code also saves under its logs folder, records:
 
-- one line per refresh: the quota shown, or why it fell back;
+- the status bar's one-line summary, on each quota refresh and whenever `ctx` changes;
 - request errors, including the HTTP status and up to 200 characters of the server's error
   response;
 - if the endpoint's reply isn't recognised, up to 1,000 characters of that reply.

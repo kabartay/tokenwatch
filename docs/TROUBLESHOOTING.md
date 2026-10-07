@@ -5,25 +5,24 @@ saying what was shown and, if it fell back, why.
 
 ## What a healthy log looks like
 
+Every line is the same one-line summary the status bar shows. For example:
+
 ```text
-2026-10-07 21:30:42.492 [info] Tokenwatch 0.2.1 activated
-2026-10-07 21:30:42.752 [info] 5h 9% (resets in 4h 9m) · wk 41%
-2026-10-07 21:31:05.343 [info] Tokenwatch 0.2.1 activated
-2026-10-07 21:31:05.683 [info] 5h 9% (resets in 4h 8m) · wk 41%
-2026-10-07 21:31:16.255 [info] 5h 9% (resets in 4h 8m) · wk 41%
-2026-10-07 21:32:05.631 [info] 5h 9% (resets in 4h 7m) · wk 41%
-2026-10-07 21:33:05.704 [info] 5h 9% (resets in 4h 6m) · wk 41%
-2026-10-07 21:34:05.627 [info] 5h 9% (resets in 4h 5m) · wk 41%
-2026-10-07 21:35:05.693 [info] 5h 9% (resets in 4h 4m) · wk 41%
+2026-10-07 23:36:42.385 [info] Tokenwatch 0.5.1 activated
+2026-10-07 23:36:42.385 [info] Restored quota from 2026-10-07T21:36:18.601Z: 5h 24% ↻2h 3m · wk 44%
+2026-10-07 23:36:42.414 [info] 5h 24% ↻2h 3m · wk 44% · ctx: 61%
+2026-10-07 23:38:11.902 [info] 5h 24% ↻2h 1m · wk 44% · ctx: 62%
+2026-10-07 23:39:42.517 [info] 5h 25% ↻2h 0m · wk 44% · ctx: 62%
 ```
 
 How to read it:
 
-- `activated` appears once per window load. Two lines close together mean the window was
-  reloaded.
-- A quota line appears about every 180 s (`tokenwatch.pollIntervalSeconds`; the sample above
-  is from an older version that polled every 60 s). An off-cycle line, like 21:31:16 above, is
-  a manual refresh. `Context:` lines appear every 15 s.
+- `activated` appears once per window load, followed by `Restored quota` when numbers from
+  before the reload were recent enough to show straight away.
+- A line appears on every quota refresh, about every 3 minutes
+  (`tokenwatch.pollIntervalSeconds`), and whenever `ctx` changes, which is after a Claude reply.
+  An off-cycle line soon after `activated` is usually a manual refresh.
+- `Backing off polling for 180s` follows a rate limit; the line before it says why.
 - **Gaps are normal.** Polls are skipped while the window isn't focused, and the next line
   appears when you come back.
 

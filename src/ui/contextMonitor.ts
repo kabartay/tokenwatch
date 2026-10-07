@@ -19,6 +19,10 @@ export class ContextMonitor implements vscode.Disposable {
   private contextWindowTokens = readConfig().contextWindowTokens;
   private timer: ReturnType<typeof setInterval> | undefined;
   private inFlight = false;
+  /** Last diagnostic logged, so each is written once rather than every 15 s poll. */
+  private lastLogged: string | undefined;
+  /** Last `ctx: N%` logged; the line is logged again only when this changes. */
+  private lastLabel: string | undefined;
   private readonly subscriptions: vscode.Disposable[] = [];
 
   /**
@@ -61,7 +65,7 @@ export class ContextMonitor implements vscode.Disposable {
     this.inFlight = true;
     try {
       if (!this.showContext) {
-        this.log.info('Context: disabled (tokenwatch.showContext is off)');
+        this.logOnChange('Context: disabled (tokenwatch.showContext is off)');
         this.statusBar.setContext(undefined);
         return;
       }
@@ -69,24 +73,32 @@ export class ContextMonitor implements vscode.Disposable {
         .filter((f) => f.uri.scheme === 'file')
         .map((f) => f.uri.fsPath);
       if (folders.length === 0) {
-        this.log.info('Context: no open folder in this window');
+        this.logOnChange('Context: no open folder in this window');
         this.statusBar.setContext(undefined);
         return;
       }
       const reading = await this.reader.read(folders, this.contextWindowTokens);
-      this.log.info(
-        reading
-          ? `Context: ${Math.round(reading.percent)}% (${reading.model ?? 'unknown model'}, ` +
-              `${reading.tokens} of ${reading.windowTokens} tokens, last reply ${reading.at.toISOString()})`
-          : `Context: no Claude Code session found for [${folders.join(', ')}]`,
-      );
+      if (!reading) this.logOnChange(`Context: no Claude Code session found for [${folders.join(', ')}]`);
       this.statusBar.setContext(reading);
+      // Log the status bar's one line when ctx changes; the countdown alone ticking doesn't count.
+      const label = this.statusBar.contextLabel();
+      if (label && label !== this.lastLabel) {
+        const line = this.statusBar.summary();
+        if (line) this.log.info(line);
+      }
+      this.lastLabel = label;
     } catch (err) {
       this.log.warn(`Context read failed: ${err instanceof Error ? err.message : String(err)}`);
       this.statusBar.setContext(undefined);
     } finally {
       this.inFlight = false;
     }
+  }
+
+  private logOnChange(message: string): void {
+    if (message === this.lastLogged) return;
+    this.lastLogged = message;
+    this.log.info(message);
   }
 
   dispose(): void {

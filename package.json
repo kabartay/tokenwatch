@@ -2,7 +2,7 @@
   "name": "tokenwatch",
   "displayName": "Tokenwatch",
   "description": "Live Claude Code quota in your status bar: 5-hour session and weekly usage with reset countdowns.",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "publisher": "kabartay",
   "icon": "images/icon.png",
   "galleryBanner": {

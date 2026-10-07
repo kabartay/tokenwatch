@@ -8,7 +8,14 @@
  */
 
 import * as vscode from 'vscode';
-import { formatClock, formatCountdown, formatPercent, formatTokens, formatTokensRounded } from '../domain/format';
+import {
+  formatClock,
+  formatCountdown,
+  formatPercent,
+  formatTokens,
+  formatTokensRounded,
+  summarizeState,
+} from '../domain/format';
 import {
   assess,
   describePace,
@@ -88,6 +95,19 @@ export class UsageStatusBar implements vscode.Disposable {
   setRefreshing(refreshing: boolean): void {
     this.refreshing = refreshing;
     this.repaint();
+  }
+
+  /**
+   * The status bar's content as plain text, for logs and notifications.
+   *
+   * @param state - Quota state to describe; defaults to the one on screen.
+   * @returns For example `"5h 24% ↻2h 2m · wk 44% · ctx: 61%"`, or `undefined` before the first
+   *   quota result.
+   */
+  summary(state: UsageState = this.state): string | undefined {
+    if (state.kind === 'loading') return undefined;
+    const context = this.contextLabel();
+    return context ? `${summarizeState(state)} · ${context}` : summarizeState(state);
   }
 
   /** @returns The context part of the line, e.g. `"ctx: 49%"`, or `undefined` when not shown. */

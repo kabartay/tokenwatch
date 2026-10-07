@@ -8,7 +8,7 @@
  */
 
 import * as vscode from 'vscode';
-import { formatCountdown, formatPercent, formatTokens, formatTokensRounded } from '../core/format';
+import { formatClock, formatCountdown, formatPercent, formatTokens, formatTokensRounded } from '../core/format';
 import {
   assess,
   describePace,
@@ -125,7 +125,7 @@ export class UsageStatusBar implements vscode.Disposable {
             '`~/.claude/.credentials.json`).\n\nRun `claude`, log in, then click to refresh.',
         };
       case 'live':
-        return this.renderLive(state.snapshot, state.fetchedAt);
+        return this.renderLive(state.snapshot, state.fetchedAt, state.staleReason);
       case 'fallback':
         return {
           text: `$(graph-line) ~${formatTokens(state.estimate.tokensToday)} tok today`,
@@ -146,6 +146,7 @@ export class UsageStatusBar implements vscode.Disposable {
   private renderLive(
     snapshot: UsageSnapshot,
     fetchedAt: Date,
+    staleReason: string | undefined,
   ): { text: string; tooltip: string; color?: vscode.ThemeColor; backgroundColor?: vscode.ThemeColor } {
     const now = new Date();
     const { level, reason } = assess(snapshot, this.config.warnThresholdPercent, now);
@@ -162,12 +163,15 @@ export class UsageStatusBar implements vscode.Disposable {
     const tooltip = [
       level === 'ok' ? '**Claude usage**' : `**Claude usage** · ${LEVEL_ICON[level]} ${reason ?? ''}`,
       '',
+      ...(staleReason
+        ? [`$(clock) Showing numbers from ${formatClock(fetchedAt)} (${escape(staleReason)}); retrying automatically.`, '']
+        : []),
       '| | Used | | Pace | Resets |',
       '| :-- | :-- | --: | :-- | :-- |',
       tooltipRow('session', '5h session', session, now),
       tooltipRow('weekly', 'Weekly', weekly, now),
       '',
-      `Updated ${fetchedAt.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} · click to refresh`,
+      `Updated ${formatClock(fetchedAt)} · click to refresh`,
     ].join('\n');
 
     let color: vscode.ThemeColor | undefined;

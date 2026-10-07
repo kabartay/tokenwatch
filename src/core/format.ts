@@ -21,13 +21,19 @@ export function summarizeState(state: UsageState, now: Date = new Date()): strin
     case 'live': {
       const { session, weekly } = state.snapshot;
       const reset = session?.resetsAt ? ` ${formatCountdown(session.resetsAt, now)}` : '';
-      return `5h ${formatPercent(session?.percentUsed)}${reset} · wk ${formatPercent(weekly?.percentUsed)}`;
+      const stale = state.staleReason ? ` (as of ${formatClock(state.fetchedAt)}; ${state.staleReason})` : '';
+      return `5h ${formatPercent(session?.percentUsed)}${reset} · wk ${formatPercent(weekly?.percentUsed)}${stale}`;
     }
     case 'fallback':
       return `live quota unavailable (${state.reason}); ~${formatTokens(state.estimate.tokensToday)} tokens today`;
     case 'error':
       return `error: ${state.message}`;
   }
+}
+
+/** Formats a time of day as `HH:MM` in the user's locale. */
+export function formatClock(at: Date): string {
+  return at.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
 
 /**

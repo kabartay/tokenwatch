@@ -101,7 +101,7 @@ Transcripts record the model but not its window size, so `windowFor()` takes it 
 `tokenwatch.contextWindowTokens` (exact id, longest prefix, then `"*"`). Otherwise it infers
 200k, or 1M once the session has grown past 200k, which only a 1M window allows.
 
-Quota and context are polled independently — different sources, different rates (60s vs 15s)
+Quota and context are polled independently — different sources, different rates (180s vs 15s)
 — but rendered as one line by `UsageStatusBar`: `ContextMonitor` has no status bar item of its
 own, it calls `statusBar.setContext(reading)` and `UsageStatusBar` repaints from whichever of
 quota or context was set most recently. Quota's alert colour always wins over context's,
@@ -126,12 +126,16 @@ refreshes immediately if its data is older than the interval.
 **Concurrent refreshes share one in-flight promise.** A click during a timer tick, or a
 focus event during a slow request, never sends a second request.
 
-**A 429 backs off instead of retrying on cadence.** Polling at the default interval has drawn
-a 429 on roughly every other request in practice, so the endpoint's own limit is tighter than
-assumed. `UsageApiClient` parses `Retry-After` (seconds, or an HTTP date) onto `UsageApiError`;
-`UsageService` turns that into `retryAfterSeconds` on the `fallback`/`error` state, defaulting
-to 180s when the server didn't send one; `UsageController` skips scheduled polls until that
-time passes. A manual refresh is never held back by this, only the timer is.
+**A 429 backs off, and the last good numbers stay on screen.** Polling every 60s drew a 429
+on roughly every other request in practice; the limit appears to be per account and shared with
+Claude Code itself, so the default interval is 180s. On a 429, `UsageApiClient` parses
+`Retry-After` (seconds, or an HTTP date) onto `UsageApiError`, and `UsageService` sets
+`retryAfterSeconds` to that value or 180s, whichever is longer. Honouring the header alone
+never engaged the backoff in practice (most likely the server sent `0`). `UsageController` then
+skips every poll until the backoff ends, including manual refreshes, which report the wait
+instead of drawing another 429. Meanwhile it keeps rendering the last live snapshot, if under
+30 minutes old, marked `staleReason: 'rate-limited'`, rather than switching to the local token
+count.
 
 **The local fallback is incremental.** A single session log can exceed 100 MB, and one
 measured day touched 1.1 GB across 28 files. The estimator keeps a byte offset per file and

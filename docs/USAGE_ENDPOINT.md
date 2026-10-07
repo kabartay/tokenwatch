@@ -67,13 +67,19 @@ in case of renames.
 
 ## Rate limits
 
-A poll that gets a 429 backs off automatically: it honours a `Retry-After` header if the
-server sends one, or waits 180s otherwise, before polling again. In practice, polling every
-60s has drawn a 429 on roughly every other request, so the endpoint's own limit is tighter
-than one request per minute.
+Polling every 60s drew a 429 on roughly every other request, so the limit is tighter than one
+request per minute. It appears to be per account and shared with Claude Code itself, which
+calls the same endpoint. Tokenwatch therefore polls every 180s by default.
 
-Manual refreshes (clicking the item, or the command) are never blocked by this backoff, only
-the automatic timer is.
+After a 429 it waits at least 180s, longer if `Retry-After` asks for more. Honouring
+`Retry-After` alone never engaged the backoff in practice, most likely because the server sent
+`0`. The log line for each 429 includes the header value when one was sent.
+
+During the backoff:
+
+- the status bar keeps the last good numbers (if under 30 minutes old), and the tooltip says
+  they are from an earlier time;
+- a manual refresh doesn't send a request; it reports when the next attempt will be.
 
 ## When it breaks
 

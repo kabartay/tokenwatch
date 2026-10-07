@@ -5,6 +5,7 @@
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
 import {
+  formatClock,
   formatCountdown,
   formatDuration,
   formatPercent,
@@ -30,6 +31,20 @@ describe('summarizeState', () => {
       now,
     );
     assert.equal(text, '5h 42% ↻2h 13m · wk 18%');
+  });
+
+  it('marks kept-on-screen numbers as stale with their time', () => {
+    const fetchedAt = new Date('2026-10-07T11:41:00Z');
+    const text = summarizeState(
+      {
+        kind: 'live',
+        fetchedAt,
+        staleReason: 'rate-limited',
+        snapshot: { raw: {}, session: { percentUsed: 16 }, weekly: { percentUsed: 43 } },
+      },
+      now,
+    );
+    assert.equal(text, `5h 16% · wk 43% (as of ${formatClock(fetchedAt)}; rate-limited)`);
   });
 
   it('names the reason when falling back', () => {

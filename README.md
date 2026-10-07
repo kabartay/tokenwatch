@@ -55,7 +55,9 @@ automatic, so repeat this for each release.
 
 ## Usage
 
-The item sits at the right end of the status bar and refreshes every 60 seconds.
+The item sits at the right end of the status bar. Quota refreshes every 3 minutes (the usage
+endpoint's rate limit is shared with Claude Code itself); the reset countdown and `ctx` update
+every 15 seconds.
 
 | Shows | Meaning |
 | --- | --- |
@@ -75,7 +77,7 @@ The item sits at the right end of the status bar and refreshes every 60 seconds.
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `tokenwatch.pollIntervalSeconds` | `60` | Seconds between refreshes (minimum 30). |
+| `tokenwatch.pollIntervalSeconds` | `180` | Seconds between quota refreshes (minimum 60). Faster polling draws 429s. |
 | `tokenwatch.warnThresholdPercent` | `80` | Turn amber at or above this percentage. |
 | `tokenwatch.statusBarStyle` | `bars` | `bars` shows `5h ▰▱▱▱▱ 9%`; `compact` shows `5h 9%`. |
 | `tokenwatch.showResetCountdown` | `true` | Show `↻4h 8m` until the session resets. |

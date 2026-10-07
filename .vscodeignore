@@ -10,6 +10,6 @@ node_modules/**
 .gitignore
 eslint.config.ts
 tsconfig.json
-install.sh
+scripts/**
 SECURITY.md
 *.vsix

@@ -55,7 +55,7 @@ Hover over it for the details: both quota windows with their reset times and a p
 3. Reload the window: `Cmd+Shift+P` → **Developer: Reload Window**.
 
 From a terminal: `code --install-extension tokenwatch-*.vsix`. With the `gh` CLI,
-`./install.sh` downloads and installs the latest release in one step. Updates aren't
+`scripts/install.sh` downloads and installs the latest release in one step. Updates aren't
 automatic, so repeat this for each release.
 
 ### Recommended setting

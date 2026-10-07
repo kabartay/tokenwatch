@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Downloads the latest Tokenwatch release and installs it into VS Code.
-# Usage: ./install.sh [owner/repo]    Requires: gh (authenticated), code.
+# Usage: scripts/install.sh [owner/repo]    Requires: gh (authenticated), code.
 set -euo pipefail
 
 REPO="${1:-kabartay/tokenwatch}"

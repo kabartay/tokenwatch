@@ -6,6 +6,8 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-10-07
+
 ### Fixed
 
 - Rate limits (429) no longer cause a loop of failed polls. Tokenwatch now backs off for at
@@ -37,6 +39,7 @@ All notable changes to Tokenwatch. The format follows
 - The tooltip is a table with a usage bar, pace and exact reset time for each window.
 - Notifications and log lines use `↻4h 8m` instead of `(resets in 4h 8m)`.
 - The ESLint config is written in TypeScript.
+- Dev tooling updated: ESLint 10, `@vscode/vsce` 4, `@types/node` 26.
 
 ## [0.3.0] — 2026-10-07
 
@@ -93,7 +96,8 @@ All notable changes to Tokenwatch. The format follows
 
 - Initial release.
 
-[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/kabartay/tokenwatch/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/kabartay/tokenwatch/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/kabartay/tokenwatch/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kabartay/tokenwatch/compare/v0.1.0...v0.2.0

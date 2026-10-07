@@ -11,5 +11,4 @@ node_modules/**
 eslint.config.ts
 tsconfig.json
 scripts/**
-SECURITY.md
 *.vsix

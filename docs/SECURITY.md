@@ -37,7 +37,7 @@ It **never** contains the access token or the refresh token. A unit test
 
 - It doesn't use the refresh token or modify your credentials.
 - It doesn't send telemetry or analytics, and makes no network calls besides the one above.
-- It has no runtime dependencies. All the code that runs is in [`src/`](src).
+- It has no runtime dependencies. All the code that runs is in [`src/`](../src).
 
 ## Reporting a vulnerability
 

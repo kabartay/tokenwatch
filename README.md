@@ -156,7 +156,7 @@ Anything else, such as `~1.5M tok today` or rate limits, is covered in
   so a reload can show it at once.
 - No telemetry, no runtime dependencies.
 
-[SECURITY.md](SECURITY.md) lists exactly what is read, sent, stored and logged.
+[SECURITY.md](docs/SECURITY.md) lists exactly what is read, sent, stored and logged.
 
 ## Caveats
 

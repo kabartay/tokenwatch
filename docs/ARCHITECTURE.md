@@ -44,6 +44,8 @@ flowchart LR
 | `core/usageApi.ts` | `UsageApiClient` (HTTP) and `parseUsageResponse` (pure). |
 | `core/localUsage.ts` | `LocalUsageEstimator`: incremental scan of session logs. |
 | `core/usageService.ts` | The refresh decision: live, fallback, or error. |
+| `core/contextUsage.ts` | `ContextReader`: context size from the tail of the newest session transcript. |
+| `vscode/contextMonitor.ts` | The separate `ctx %` item, its 15 s poll and tooltip. |
 | `core/insights.ts` | Pure derived views: progress bars, pace projection, alert level. |
 | `core/format.ts` | Pure formatting: percentages, durations, `↻` countdowns, token counts, one-line summaries. |
 | `vscode/controller.ts` | Polling timer, focus gating, live config reload, manual refresh. |
@@ -83,6 +85,24 @@ only colour text and use two background colours, so each level maps onto one of 
 Pace is the average since the window started: `percentUsed / (now − (resetsAt − length))`.
 That needs no stored samples, so it is correct after a reload. It is suppressed in the
 first 10 minutes of a window, when a single large prompt would distort it.
+
+## Context size
+
+`ContextReader` finds this window's session transcripts in
+`~/.claude/projects/<folder with non-alphanumerics replaced by '->/` and takes the newest
+file. It reads from the end of the file (256 KB, then 4 MB if a long tool result is in the
+way) back to the last main-thread reply. That reply's
+`input_tokens + cache_creation_input_tokens + cache_read_input_tokens` is the context size
+`/context` reports. Subagent (`isSidechain`) replies are skipped because they have their own
+context. Entries aren't filtered by `cwd`, since a session keeps its context after Claude
+changes directory.
+
+Transcripts record the model but not its window size, so `windowFor()` takes it from
+`tokenwatch.contextWindowTokens` (exact id, longest prefix, then `"*"`). Otherwise it infers
+200k, or 1M once the session has grown past 200k, which only a 1M window allows.
+
+It's a separate status bar item because quota belongs to the account while context belongs to
+one session. Users can hide either one from the status bar menu.
 
 ## Design decisions
 

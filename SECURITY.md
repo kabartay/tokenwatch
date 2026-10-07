@@ -8,7 +8,7 @@ Tokenwatch handles your Claude Code login, so this page states exactly what it t
 | --- | --- | --- |
 | Claude Code credentials (access and refresh token) | macOS Keychain item `Claude Code-credentials`, or `~/.claude/.credentials.json` | Only the access token is extracted. The refresh token is read along with it but never used. |
 | Quota utilization and reset times | `api.anthropic.com/api/oauth/usage` | The status bar. |
-| Session logs | `~/.claude/projects/**/*.jsonl`, only when live quota is unavailable | Token counts only. These files contain your conversations, but Tokenwatch extracts nothing except the `usage` numbers, timestamps and message ids. |
+| Session transcripts | `~/.claude/projects/**/*.jsonl` | These files contain your conversations. Tokenwatch extracts only the `usage` token counts, model id, timestamps and message ids: to show context size (`ctx %`, the latest session in this window's folder, read every 15 s), and to count today's tokens when live quota is unavailable. |
 
 ## Where data goes
 

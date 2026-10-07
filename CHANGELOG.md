@@ -14,6 +14,11 @@ All notable changes to Tokenwatch. The format follows
 - Pace-aware warnings: yellow text when a window will run out before it resets, amber when
   that's under an hour away.
 - Settings `tokenwatch.statusBarStyle` (`bars` or `compact`) and `tokenwatch.showResetCountdown`.
+- Context size item, `ctx ▰▰▱▱▱ 29%`: how full the context window is in the latest Claude Code
+  session started in this window's folder, read from its transcript every 15 s. The tooltip
+  shows "291k of 1M tokens", the model and the time of the last reply.
+- Setting `tokenwatch.contextWindowTokens`: context window size per model (exact id, prefix
+  or `"*"`), with 200k/1M inference for unlisted models. Setting `tokenwatch.showContext`.
 
 ### Changed
 

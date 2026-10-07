@@ -30,6 +30,8 @@
 - **Reset countdown** right in the status bar: `↻4h 8m` until the 5-hour session resets.
 - **Pace projection.** The tooltip shows where each window is heading at your pace so far:
   "~45% at reset", or "runs out in 1h 20m" if you'll hit the limit first.
+- **Context size**: a second item, `ctx ▰▰▱▱▱ 29%`, shows how full the context window is in
+  the latest Claude Code session started in this window's folder, like `/context`.
 - **Warnings before it's too late.** The text turns **yellow** when you're on pace to run out
   before the reset, the item turns **amber** at your threshold or when the limit is under an
   hour away, and **red** at 100%.
@@ -58,6 +60,7 @@ The item sits at the right end of the status bar and refreshes every 60 seconds.
 | Shows | Meaning |
 | --- | --- |
 | `5h ▰▱▱▱▱ 9% ↻4h 8m · wk ▰▰▱▱▱ 41%` | Live quota: share used of the 5-hour session (resetting in 4h 8m) and of the week. |
+| `ctx ▰▱▱▱▱ 29%` | Context window used by this folder's latest Claude session. Yellow from 70%, amber from 90%. Hidden when there's no session. |
 | `~1.2M tok today` | Live quota unavailable. Shows tokens logged locally today, and the tooltip says why. |
 | `Claude: log in` | No Claude Code login found. Run `claude` and log in. |
 | `Claude usage` in red | Nothing worked. The tooltip has the error. |
@@ -76,6 +79,8 @@ The item sits at the right end of the status bar and refreshes every 60 seconds.
 | `tokenwatch.warnThresholdPercent` | `80` | Turn amber at or above this percentage. |
 | `tokenwatch.statusBarStyle` | `bars` | `bars` shows `5h ▰▱▱▱▱ 9%`; `compact` shows `5h 9%`. |
 | `tokenwatch.showResetCountdown` | `true` | Show `↻4h 8m` until the session resets. |
+| `tokenwatch.showContext` | `true` | Show the `ctx %` item. |
+| `tokenwatch.contextWindowTokens` | `{}` | Context window per model, for example `{ "claude-opus": 1000000 }`. Keys match an exact id, a prefix, or `"*"`. Unlisted models assume 200k, or 1M once a session passes 200k. |
 
 Changes apply immediately, with no reload.
 
@@ -116,8 +121,9 @@ details are in [Usage endpoint](docs/USAGE_ENDPOINT.md).
 - Your access token is sent **only** to `api.anthropic.com`, over HTTPS.
 - It is never logged or written to disk, and a unit test checks that it never reaches the
   log.
-- The fallback reads your local session logs for token counts only. Nothing else is
-  extracted from them, and nothing from them leaves your machine.
+- Your local session transcripts are read for token counts, model ids and timestamps only, to
+  show context size and for the fallback. Nothing else is extracted from them, and nothing
+  from them leaves your machine.
 - There's no telemetry and there are no runtime dependencies.
 
 The Tokenwatch log records refresh outcomes and error messages. If the endpoint's reply

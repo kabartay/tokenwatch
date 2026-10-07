@@ -22,6 +22,8 @@ export function readConfig(): TokenwatchConfig {
     warnThresholdPercent: Math.min(100, Math.max(0, cfg.get<number>('warnThresholdPercent', 80))),
     statusBarStyle: cfg.get<string>('statusBarStyle') === 'compact' ? 'compact' : 'bars',
     showResetCountdown: cfg.get<boolean>('showResetCountdown', true),
+    showContext: cfg.get<boolean>('showContext', true),
+    contextWindowTokens: cfg.get<Record<string, number>>('contextWindowTokens', {}),
   };
 }
 
@@ -31,4 +33,6 @@ export const DEFAULT_CONFIG: TokenwatchConfig = {
   warnThresholdPercent: 80,
   statusBarStyle: 'bars',
   showResetCountdown: true,
+  showContext: true,
+  contextWindowTokens: {},
 };

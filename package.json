@@ -84,6 +84,20 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "Show when the 5-hour session resets, for example `↻4h 8m`, in the status bar."
+        },
+        "tokenwatch.showContext": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show how full the context window is (`ctx 29%`) for the latest Claude Code session started in this window's folder."
+        },
+        "tokenwatch.contextWindowTokens": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 1
+          },
+          "default": {},
+          "markdownDescription": "Context window size per model, used for `ctx %`. Keys match an exact model id, a prefix (`\"claude-opus\"` covers every Opus version), or `\"*\"` for everything else. Unlisted models assume 200k, or 1M once a session grows past 200k. Example: `{ \"claude-opus\": 1000000 }`."
         }
       }
     }

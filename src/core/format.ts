@@ -86,3 +86,14 @@ export function formatTokens(tokens: number): string {
   if (tokens < 1_000_000) return `${(tokens / 1_000).toFixed(1)}k`;
   return `${(tokens / 1_000_000).toFixed(1)}M`;
 }
+
+/**
+ * Formats a token count rounded to whole units, for at-a-glance figures.
+ *
+ * @returns For example `"950"`, `"291k"`, `"1M"`, `"1.5M"`.
+ */
+export function formatTokensRounded(tokens: number): string {
+  if (tokens < 1_000) return String(Math.round(tokens));
+  if (tokens < 999_500) return `${Math.round(tokens / 1_000)}k`;
+  return `${Number((tokens / 1_000_000).toFixed(1))}M`;
+}

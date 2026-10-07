@@ -43,6 +43,20 @@ On Linux the base folder is `~/.config/Code/logs`, and on Windows it's `%APPDATA
   from the command palette: it shows the result in a notification wherever the item is.
 - Check the extension is installed and enabled: Extensions → *Installed* → **Tokenwatch**.
 
+### No `ctx %` item
+
+The context item appears only when a Claude Code session was **started in a folder open in
+this window**. Claude Code files sessions under the folder you ran `claude` in, so a session
+started in a parent or sub-folder belongs to that folder instead. The item also hides if
+`tokenwatch.showContext` is off.
+
+### `ctx %` looks too high or too low
+
+Transcripts don't record the model's context window, so Tokenwatch assumes 200k, or 1M once
+a session passes 200k. If your model has a different window, set it in
+`tokenwatch.contextWindowTokens`, for example `{ "claude-opus": 1000000 }`. Hover over the
+item to see which model and window size it used.
+
 ### `Claude: log in`, though you're logged in
 
 The log says `No access token in the macOS Keychain or ~/.claude/.credentials.json`.

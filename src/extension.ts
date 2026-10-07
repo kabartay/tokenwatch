@@ -3,10 +3,12 @@
  */
 
 import * as vscode from 'vscode';
+import { ContextReader } from './core/contextUsage';
 import { CredentialStore } from './core/credentials';
 import { LocalUsageEstimator } from './core/localUsage';
 import { UsageApiClient } from './core/usageApi';
 import { UsageService } from './core/usageService';
+import { ContextMonitor } from './vscode/contextMonitor';
 import { UsageController } from './vscode/controller';
 import { UsageStatusBar } from './vscode/statusBar';
 
@@ -35,11 +37,13 @@ export function activate(context: vscode.ExtensionContext): void {
     log,
   });
   const controller = new UsageController({ service, statusBar, log });
+  const contextMonitor = new ContextMonitor(new ContextReader(), log);
 
   context.subscriptions.push(
     log,
     statusBar,
     controller,
+    contextMonitor,
     vscode.commands.registerCommand(REFRESH_COMMAND, (args?: RefreshArgs) =>
       controller.refreshManually(!args?.quiet),
     ),
@@ -48,6 +52,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const { version } = context.extension.packageJSON as { version: string };
   log.info(`Tokenwatch ${version} activated`);
   controller.start();
+  contextMonitor.start();
 }
 
 /** Nothing to do: everything is disposed through `context.subscriptions`. */

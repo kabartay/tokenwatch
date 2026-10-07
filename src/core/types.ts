@@ -41,6 +41,10 @@ export interface TokenwatchConfig {
   readonly statusBarStyle: 'bars' | 'compact';
   /** Append the session reset countdown (`↻4h 8m`) to the status bar text. */
   readonly showResetCountdown: boolean;
+  /** Show the context-window item for this workspace's Claude Code session. */
+  readonly showContext: boolean;
+  /** Context window per model id (exact, prefix, or `"*"`); unlisted models are inferred. */
+  readonly contextWindowTokens: Readonly<Record<string, number>>;
 }
 
 /** Everything the status bar can display; one variant per outcome of a refresh. */

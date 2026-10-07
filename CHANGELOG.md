@@ -6,8 +6,13 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+## [0.4.2] — 2026-10-07
+
 ### Fixed
 
+- **Tokenwatch: Refresh Claude Usage** now includes `ctx` in its notification, matching the
+  status bar line. During a rate-limit backoff it shows your current numbers and when the next
+  update is, instead of only "rate-limited".
 - Clicking the item no longer blanks the line into a `Claude` spinner while it refreshes; the
   numbers stay and only the icon spins.
 
@@ -115,7 +120,8 @@ All notable changes to Tokenwatch. The format follows
 
 - Initial release.
 
-[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/kabartay/tokenwatch/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/kabartay/tokenwatch/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/kabartay/tokenwatch/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/kabartay/tokenwatch/compare/v0.2.1...v0.3.0

@@ -108,7 +108,7 @@ export class UsageController implements vscode.Disposable {
       const wait = formatDuration(this.backoffUntil - Date.now());
       this.deps.log.info(`Manual refresh skipped: rate-limited, next attempt in ${wait}`);
       if (notify) {
-        const message = `Tokenwatch: rate-limited by the usage endpoint; next attempt in ${wait}`;
+        const message = `${this.notificationText()} · next update in ${wait}`;
         if ((await vscode.window.showWarningMessage(message, 'Show Log')) === 'Show Log') {
           this.deps.log.show();
         }
@@ -123,12 +123,18 @@ export class UsageController implements vscode.Disposable {
     }
     if (!notify) return;
 
-    const message = `Tokenwatch: ${summarizeState(this.state)}`;
+    const message = this.notificationText();
     const choice =
       this.state.kind === 'live'
         ? await vscode.window.showInformationMessage(message, 'Show Log')
         : await vscode.window.showWarningMessage(message, 'Show Log');
     if (choice === 'Show Log') this.deps.log.show();
+  }
+
+  /** What the status bar shows, as one line for a notification: quota, then `ctx` if any. */
+  private notificationText(): string {
+    const context = this.deps.statusBar.contextLabel();
+    return `Tokenwatch: ${summarizeState(this.state)}${context ? ` · ${context}` : ''}`;
   }
 
   dispose(): void {

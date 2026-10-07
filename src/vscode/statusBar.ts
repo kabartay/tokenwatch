@@ -91,6 +91,11 @@ export class UsageStatusBar implements vscode.Disposable {
     this.repaint();
   }
 
+  /** @returns The context part of the line, e.g. `"ctx: 49%"`, or `undefined` when not shown. */
+  contextLabel(): string | undefined {
+    return this.context ? `ctx: ${formatPercent(this.context.percent)}` : undefined;
+  }
+
   dispose(): void {
     this.item.dispose();
   }
@@ -101,7 +106,7 @@ export class UsageStatusBar implements vscode.Disposable {
       this.refreshing && this.state.kind !== 'loading'
         ? { ...rendered, text: rendered.text.replace(/^\$\([^)]*\)/, '$(sync~spin)') }
         : rendered;
-    const contextText = this.context ? `ctx: ${formatPercent(this.context.percent)}` : undefined;
+    const contextText = this.contextLabel();
     this.item.text = contextText ? `${quota.text} · ${contextText}` : quota.text;
     this.item.tooltip = combinedTooltip(quota.tooltip, this.context);
 

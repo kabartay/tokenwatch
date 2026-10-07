@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
-# Downloads the latest release .vsix from GitHub and installs it into VS Code.
-# Usage: ./install.sh [owner/repo]   (defaults to the origin remote)
+# Downloads the latest Tokenwatch release and installs it into VS Code.
+# Usage: ./install.sh [owner/repo]    Requires: gh (authenticated), code.
 set -euo pipefail
 
-REPO="${1:-$(git config --get remote.origin.url | sed -E 's#.*github.com[:/](.+/.+?)(\.git)?$#\1#')}"
+REPO="${1:-kabartay/tokenwatch}"
 
-echo "Installing latest release from $REPO ..."
+for cmd in gh code; do
+  command -v "$cmd" >/dev/null || { echo "error: '$cmd' not found on PATH" >&2; exit 1; }
+done
+
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
+echo "Downloading latest release of $REPO ..."
 gh release download -R "$REPO" -p '*.vsix' -D "$tmpdir"
-vsix="$(ls "$tmpdir"/*.vsix | head -n1)"
-code --install-extension "$vsix"
-echo "Installed $vsix"
+
+vsix=("$tmpdir"/*.vsix)
+code --install-extension "${vsix[0]}" --force
+echo "Installed $(basename "${vsix[0]}"). Reload VS Code windows to pick it up."

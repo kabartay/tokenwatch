@@ -1,9 +1,11 @@
 .vscode/**
 .github/**
 src/**
+out/test/**
+**/*.map
+**/*.ts
+node_modules/**
 .gitignore
 tsconfig.json
-*.map
-node_modules/**
-.vscode-test/**
 install.sh
+*.vsix

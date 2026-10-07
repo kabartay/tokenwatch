@@ -19,13 +19,16 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - run: npm ci
 
       - name: Typecheck
-        run: npx tsc --noEmit -p ./
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
 
       # A manifest or source error that only surfaces at package time would otherwise
       # ship silently until someone tries to install the .vsix from a tagged release.

@@ -141,3 +141,8 @@ gh pr close <N> --comment "Applied in <commit>."
    ```bash
    gh release download "$v" -p '*.vsix' -D /tmp/tw && code --install-extension /tmp/tw/*.vsix --force
    ```
+
+8. Publish the same `.vsix` to the Marketplace: on
+   [the publisher page](https://marketplace.visualstudio.com/manage/publishers/kabartay), open
+   **Tokenwatch** → `···` → **Update**, and upload it. Installs made from the Marketplace then
+   update automatically.

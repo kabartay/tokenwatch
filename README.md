@@ -11,6 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/kabartay/tokenwatch/actions/workflows/ci.yml"><img src="https://github.com/kabartay/tokenwatch/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=kabartay.tokenwatch"><img src="https://img.shields.io/visual-studio-marketplace/v/kabartay.tokenwatch?label=Marketplace&color=blue" alt="VS Code Marketplace"></a>
   <a href="https://github.com/kabartay/tokenwatch/releases/latest"><img src="https://img.shields.io/github/v/release/kabartay/tokenwatch?color=blue" alt="Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT"></a>
   <a href="package.json"><img src="https://img.shields.io/badge/VS%20Code-%E2%89%A51.85-007ACC.svg?logo=visualstudiocode" alt="VS Code 1.85+"></a>
@@ -48,15 +49,21 @@ Hover over it for the details: both quota windows with their reset times and a p
 
 **Requirements:** VS Code 1.85 or newer, and Claude Code installed and logged in (`claude`).
 
-1. Download `tokenwatch-<version>.vsix` from the
-   [latest release](https://github.com/kabartay/tokenwatch/releases/latest).
-2. In VS Code, open Extensions (`Cmd+Shift+X`), click **`···`** at the top right of the panel,
-   choose **Install from VSIX…**, and pick the file.
-3. Reload the window: `Cmd+Shift+P` → **Developer: Reload Window**.
+In VS Code, open Extensions (`Cmd+Shift+X`), search for **Tokenwatch**, and click **Install**.
+Or install it from the
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=kabartay.tokenwatch),
+or from a terminal:
 
-From a terminal: `code --install-extension tokenwatch-*.vsix`. With the `gh` CLI,
-`scripts/install.sh` downloads and installs the latest release in one step. Updates aren't
-automatic, so repeat this for each release.
+```bash
+code --install-extension kabartay.tokenwatch
+```
+
+Installed this way, VS Code keeps it up to date.
+
+**Without the Marketplace:** download `tokenwatch-<version>.vsix` from the
+[latest GitHub release](https://github.com/kabartay/tokenwatch/releases/latest), then in
+Extensions click **`···`** → **Install from VSIX…**. With the `gh` CLI, `scripts/install.sh`
+does both steps. These installs don't update automatically.
 
 ### Recommended setting
 

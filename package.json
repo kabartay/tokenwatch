@@ -2,14 +2,13 @@
   "name": "tokenwatch",
   "displayName": "Tokenwatch",
   "description": "Live Claude Code quota in your status bar: 5-hour session and weekly usage with reset countdowns.",
-  "version": "0.5.3",
+  "version": "1.0.0",
   "publisher": "kabartay",
   "icon": "images/icon.png",
   "galleryBanner": {
     "color": "#1C1F26",
     "theme": "dark"
   },
-  "private": true,
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -19,6 +18,7 @@
     "url": "https://github.com/kabartay/tokenwatch/issues"
   },
   "homepage": "https://github.com/kabartay/tokenwatch#readme",
+  "qna": "https://github.com/kabartay/tokenwatch/issues",
   "keywords": [
     "claude",
     "claude-code",

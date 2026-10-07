@@ -6,6 +6,22 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-10-08
+
+The first stable release, and the first published on the
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=kabartay.tokenwatch).
+From here on, versions follow Semantic Versioning: a change that breaks a setting or existing
+behaviour means a new major version.
+
+### Added
+
+- Install from the Marketplace: search **Tokenwatch** in Extensions. Marketplace installs
+  update automatically.
+
+### Changed
+
+- The Marketplace's Q&A tab points to GitHub issues.
+
 ## [0.5.3] — 2026-10-08
 
 ### Changed
@@ -154,7 +170,8 @@ All notable changes to Tokenwatch. The format follows
 
 - Initial release.
 
-[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v0.5.3...HEAD
+[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/kabartay/tokenwatch/compare/v0.5.3...v1.0.0
 [0.5.3]: https://github.com/kabartay/tokenwatch/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/kabartay/tokenwatch/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/kabartay/tokenwatch/compare/v0.5.0...v0.5.1

@@ -6,6 +6,8 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+## [0.5.3] — 2026-10-08
+
 ### Changed
 
 - Documentation revised against the code: a lifecycle section and the exact colour rules in
@@ -152,7 +154,8 @@ All notable changes to Tokenwatch. The format follows
 
 - Initial release.
 
-[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/kabartay/tokenwatch/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/kabartay/tokenwatch/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/kabartay/tokenwatch/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/kabartay/tokenwatch/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/kabartay/tokenwatch/compare/v0.4.2...v0.5.0

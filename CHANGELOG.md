@@ -8,9 +8,12 @@ All notable changes to Tokenwatch. The format follows
 
 ### Fixed
 
-- A 429 from the usage endpoint no longer retries on the normal poll interval, which could
-  draw another 429 immediately. It now backs off, honouring a `Retry-After` header when the
-  server sends one and otherwise waiting 180s. Manual refreshes are unaffected.
+- Rate limits (429) no longer cause a loop of failed polls. Tokenwatch now backs off for at
+  least 180 s, longer if `Retry-After` asks for it, and logs the header's value.
+- While rate-limited, the status bar keeps the last good numbers (marked stale in the tooltip)
+  instead of switching to today's local token count.
+- A manual refresh during the backoff reports when the next attempt will be, instead of
+  drawing another 429.
 
 ### Added
 
@@ -28,6 +31,9 @@ All notable changes to Tokenwatch. The format follows
 
 ### Changed
 
+- The default quota poll interval is 3 minutes (was 1), and the minimum is 60 s (was 30). The
+  endpoint's limit is shared with Claude Code itself. The reset countdown and `ctx` still
+  update every 15 s.
 - The tooltip is a table with a usage bar, pace and exact reset time for each window.
 - Notifications and log lines use `↻4h 8m` instead of `(resets in 4h 8m)`.
 - The ESLint config is written in TypeScript.

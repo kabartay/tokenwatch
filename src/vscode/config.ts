@@ -9,7 +9,7 @@ import type { TokenwatchConfig } from '../core/types';
 export const CONFIG_SECTION = 'tokenwatch';
 
 /** Floor for the poll interval, so a typo can't hammer an undocumented endpoint. */
-export const MIN_POLL_INTERVAL_SECONDS = 30;
+export const MIN_POLL_INTERVAL_SECONDS = 60;
 
 /** @returns The current settings, clamped to safe ranges. */
 export function readConfig(): TokenwatchConfig {
@@ -17,7 +17,7 @@ export function readConfig(): TokenwatchConfig {
   return {
     pollIntervalSeconds: Math.max(
       MIN_POLL_INTERVAL_SECONDS,
-      cfg.get<number>('pollIntervalSeconds', 60),
+      cfg.get<number>('pollIntervalSeconds', 180),
     ),
     warnThresholdPercent: Math.min(100, Math.max(0, cfg.get<number>('warnThresholdPercent', 80))),
     statusBarStyle: cfg.get<string>('statusBarStyle') === 'compact' ? 'compact' : 'bars',
@@ -29,7 +29,7 @@ export function readConfig(): TokenwatchConfig {
 
 /** Settings used before the first read, e.g. for the initial "loading" render. */
 export const DEFAULT_CONFIG: TokenwatchConfig = {
-  pollIntervalSeconds: 60,
+  pollIntervalSeconds: 180,
   warnThresholdPercent: 80,
   statusBarStyle: 'bars',
   showResetCountdown: true,

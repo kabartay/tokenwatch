@@ -80,16 +80,28 @@ describe('UsageService.resolve', () => {
     });
   });
 
-  it('carries the server Retry-After into the fallback state', async () => {
-    const { service } = setup({
+  it('honours a server Retry-After longer than the minimum', async () => {
+    const { service, log } = setup({
       fetch: async () => {
-        throw new UsageApiError('HTTP 429: slow down', 429, 42);
+        throw new UsageApiError('HTTP 429: slow down', 429, 600);
       },
       estimate: ESTIMATE,
     });
     const state = await service.resolve(NOW);
     assert.equal(state.kind, 'fallback');
-    assert.equal(state.kind === 'fallback' && state.retryAfterSeconds, 42);
+    assert.equal(state.kind === 'fallback' && state.retryAfterSeconds, 600);
+    assert.ok(log.lines.some((l) => l.includes('(Retry-After: 600s)')), 'logs the header value');
+  });
+
+  it('never backs off less than the minimum, even if the server says Retry-After: 0', async () => {
+    const { service } = setup({
+      fetch: async () => {
+        throw new UsageApiError('HTTP 429: slow down', 429, 0);
+      },
+      estimate: ESTIMATE,
+    });
+    const state = await service.resolve(NOW);
+    assert.equal(state.kind === 'fallback' && state.retryAfterSeconds, 180);
   });
 
   it('falls back to a default backoff on 429 without a Retry-After header', async () => {
@@ -156,8 +168,10 @@ describe('describeFailure', () => {
 });
 
 describe('rateLimitBackoffSeconds', () => {
-  it('uses the server value when given, else the default, and nothing for other failures', () => {
-    assert.equal(rateLimitBackoffSeconds(new UsageApiError('x', 429, 5)), 5);
+  it('uses the longer of the server value and 180s, and nothing for other failures', () => {
+    assert.equal(rateLimitBackoffSeconds(new UsageApiError('x', 429, 600)), 600);
+    assert.equal(rateLimitBackoffSeconds(new UsageApiError('x', 429, 5)), 180);
+    assert.equal(rateLimitBackoffSeconds(new UsageApiError('x', 429, 0)), 180);
     assert.equal(rateLimitBackoffSeconds(new UsageApiError('x', 429)), 180);
     assert.equal(rateLimitBackoffSeconds(new UsageApiError('x', 500)), undefined);
     assert.equal(rateLimitBackoffSeconds(new Error('boom')), undefined);

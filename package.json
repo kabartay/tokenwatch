@@ -56,9 +56,9 @@
       "properties": {
         "tokenwatch.pollIntervalSeconds": {
           "type": "number",
-          "default": 60,
-          "minimum": 30,
-          "markdownDescription": "Seconds between automatic refreshes. Windows that are not focused skip polls and catch up when focused."
+          "default": 180,
+          "minimum": 60,
+          "markdownDescription": "Seconds between quota refreshes. The usage endpoint's rate limit is shared with Claude Code itself, so polling faster than every few minutes draws 429s. The reset countdown and context still update every 15 seconds. Unfocused windows skip polls and catch up when focused."
         },
         "tokenwatch.warnThresholdPercent": {
           "type": "number",

@@ -5,9 +5,14 @@
  */
 
 import * as vscode from 'vscode';
-import { summarizeState } from '../core/format';
+import { formatDuration, summarizeState } from '../core/format';
 import type { UsageService } from '../core/usageService';
 import type { TokenwatchConfig, UsageState } from '../core/types';
+
+/** A rate-limited refresh keeps showing the last good numbers if they are newer than this. */
+const KEEP_LAST_LIVE_MS = 30 * 60 * 1_000;
+
+type LiveState = Extract<UsageState, { kind: 'live' }>;
 import { CONFIG_SECTION, readConfig } from './config';
 import type { UsageStatusBar } from './statusBar';
 
@@ -32,8 +37,10 @@ export class UsageController implements vscode.Disposable {
   private timer: ReturnType<typeof setInterval> | undefined;
   private inFlight: Promise<void> | undefined;
   private lastRefreshAt = 0;
-  /** Epoch ms before which scheduled polls are skipped, set after a 429. */
+  /** Epoch ms before which polls are skipped, set after a 429. */
   private backoffUntil = 0;
+  /** Last successful snapshot, shown in place of the fallback while rate-limited. */
+  private lastLive: LiveState | undefined;
   private readonly subscriptions: vscode.Disposable[] = [];
 
   constructor(private readonly deps: UsageControllerDeps) {
@@ -73,6 +80,18 @@ export class UsageController implements vscode.Disposable {
    *   visibly does something even when the status bar item is out of view.
    */
   async refreshManually(notify: boolean): Promise<void> {
+    if (!this.isPastBackoff()) {
+      // Another request now would only draw another 429; say when the next one will go out.
+      const wait = formatDuration(this.backoffUntil - Date.now());
+      this.deps.log.info(`Manual refresh skipped: rate-limited, next attempt in ${wait}`);
+      if (notify) {
+        const message = `Tokenwatch: rate-limited by the usage endpoint; next attempt in ${wait}`;
+        if ((await vscode.window.showWarningMessage(message, 'Show Log')) === 'Show Log') {
+          this.deps.log.show();
+        }
+      }
+      return;
+    }
     this.deps.statusBar.render({ kind: 'loading' }, this.config);
     await this.refresh();
     if (!notify) return;
@@ -100,8 +119,20 @@ export class UsageController implements vscode.Disposable {
     }
     this.deps.log.info(summarizeState(state));
     this.applyBackoff(state);
-    this.state = state;
-    this.deps.statusBar.render(state, this.config);
+    if (state.kind === 'live') this.lastLive = state;
+    this.state = this.keepLastLiveIfRateLimited(state);
+    this.deps.statusBar.render(this.state, this.config);
+  }
+
+  /**
+   * While rate-limited, recent real numbers beat today's local token count, so the last good
+   * snapshot stays on screen (marked stale) instead of the fallback.
+   */
+  private keepLastLiveIfRateLimited(state: UsageState): UsageState {
+    const rateLimited = (state.kind === 'fallback' || state.kind === 'error') && state.retryAfterSeconds;
+    if (!rateLimited || !this.lastLive) return state;
+    if (Date.now() - this.lastLive.fetchedAt.getTime() > KEEP_LAST_LIVE_MS) return state;
+    return { ...this.lastLive, staleReason: 'rate-limited' };
   }
 
   /** Pushes out the next scheduled poll after a rate limit, instead of retrying on cadence. */

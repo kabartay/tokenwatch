@@ -21,8 +21,9 @@ How to read it:
 
 - `activated` appears once per window load. Two lines close together mean the window was
   reloaded.
-- A line appears about every 60 s (`tokenwatch.pollIntervalSeconds`). An off-cycle line,
-  like 21:31:16 above, is a manual refresh.
+- A quota line appears about every 180 s (`tokenwatch.pollIntervalSeconds`; the sample above
+  is from an older version that polled every 60 s). An off-cycle line, like 21:31:16 above, is
+  a manual refresh. `Context:` lines appear every 15 s.
 - **Gaps are normal.** Polls are skipped while the window isn't focused, and the next line
   appears when you come back.
 
@@ -77,7 +78,7 @@ reason:
 | Log says | Do this |
 | --- | --- |
 | `HTTP 401` / *login rejected* | Run any `claude` command to refresh the token, then click the item. |
-| `HTTP 429` / *rate-limited* | Tokenwatch backs off automatically (180s, or the server's `Retry-After`). If it keeps happening, close extra VS Code windows, since each polls independently. |
+| `HTTP 429` / *rate-limited* | Nothing to do. Tokenwatch backs off for at least 180 s and keeps showing the last numbers meanwhile. If it keeps happening, raise `tokenwatch.pollIntervalSeconds` or close extra VS Code windows: the limit is shared across them and with Claude Code itself. |
 | `Timed out after 10000 ms` | Network or proxy problem. Check VS Code's `http.proxy` setting. |
 | `Unrecognised usage response: {…}` | The endpoint changed. See [USAGE_ENDPOINT.md](USAGE_ENDPOINT.md#when-it-breaks) and open an issue with that line. |
 

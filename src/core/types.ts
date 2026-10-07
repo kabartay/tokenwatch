@@ -51,7 +51,13 @@ export interface TokenwatchConfig {
 export type UsageState =
   | { readonly kind: 'loading' }
   | { readonly kind: 'noCredentials' }
-  | { readonly kind: 'live'; readonly snapshot: UsageSnapshot; readonly fetchedAt: Date }
+  | {
+      readonly kind: 'live';
+      readonly snapshot: UsageSnapshot;
+      readonly fetchedAt: Date;
+      /** Set when this is the last good snapshot, kept on screen because a refresh failed. */
+      readonly staleReason?: string;
+    }
   | {
       readonly kind: 'fallback';
       readonly estimate: LocalUsageEstimate;

@@ -15,13 +15,13 @@ import type { UsageState } from './types';
 const MAX_LOGGED_BODY_CHARS = 1_000;
 
 /**
- * Backoff used on a 429 when the server didn't send `Retry-After`.
+ * Minimum backoff after a 429.
  *
- * Observed in practice: polling `/usage` every 60s drew a 429 on roughly every other request,
- * so the endpoint's own limit is tighter than one request per minute. This waits well past
- * that before trying again.
+ * Observed in practice: polling every 60s drew a 429 on roughly every other request, and backoff
+ * never engaged when it honoured `Retry-After` alone (most likely the server sent `0`). So a
+ * server value can lengthen the wait but never shorten it below this.
  */
-const DEFAULT_RATE_LIMIT_BACKOFF_SECONDS = 180;
+const MIN_RATE_LIMIT_BACKOFF_SECONDS = 180;
 
 /** Collaborators of {@link UsageService}. */
 export interface UsageServiceDeps {
@@ -65,7 +65,11 @@ export class UsageService {
     } catch (err) {
       reason = describeFailure(err);
       retryAfterSeconds = rateLimitBackoffSeconds(err);
-      log.warn(`Usage request failed: ${err instanceof Error ? err.message : String(err)}`);
+      const retryAfter =
+        err instanceof UsageApiError && err.retryAfterSeconds !== undefined
+          ? ` (Retry-After: ${err.retryAfterSeconds}s)`
+          : '';
+      log.warn(`Usage request failed: ${err instanceof Error ? err.message : String(err)}${retryAfter}`);
     }
 
     const estimate = await estimator.estimateToday(now);
@@ -78,12 +82,13 @@ export class UsageService {
 /**
  * How long to back off after a failure, if it was a rate limit.
  *
- * @returns Seconds to wait, or `undefined` for a failure that isn't a rate limit, which the
- *   normal poll interval already handles.
+ * @returns Seconds to wait: the server's `Retry-After` or {@link MIN_RATE_LIMIT_BACKOFF_SECONDS},
+ *   whichever is longer. `undefined` for a failure that isn't a rate limit, which the normal
+ *   poll interval already handles.
  */
 export function rateLimitBackoffSeconds(err: unknown): number | undefined {
   if (!(err instanceof UsageApiError) || !err.isRateLimited) return undefined;
-  return err.retryAfterSeconds ?? DEFAULT_RATE_LIMIT_BACKOFF_SECONDS;
+  return Math.max(err.retryAfterSeconds ?? 0, MIN_RATE_LIMIT_BACKOFF_SECONDS);
 }
 
 /**

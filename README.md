@@ -1,155 +1,138 @@
-# Tokenwatch
+<p align="center">
+  <img src="images/icon.png" width="96" alt="Tokenwatch icon">
+</p>
 
-[![CI](https://github.com/kabartay/tokenwatch/actions/workflows/ci.yml/badge.svg)](https://github.com/kabartay/tokenwatch/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/kabartay/tokenwatch?color=blue)](https://github.com/kabartay/tokenwatch/releases/latest)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![VS Code](https://img.shields.io/badge/VS%20Code-%E2%89%A51.85-007ACC.svg?logo=visualstudiocode)](package.json)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6.svg?logo=typescript&logoColor=white)](tsconfig.json)
-[![Dependencies](https://img.shields.io/badge/runtime%20deps-0-brightgreen.svg)](package.json)
-[![Status](https://img.shields.io/badge/status-unofficial-orange.svg)](#caveats)
+<h1 align="center">Tokenwatch</h1>
 
-**Your Claude Code quota, live in the VS Code status bar.** Stop typing `/usage` mid-flow to
-find out whether you're about to hit the wall.
+<p align="center">
+  <strong>Your Claude Code quota, live in the VS Code status bar.</strong><br>
+  Stop typing <code>/usage</code> mid-flow to find out whether you're about to hit the wall.
+</p>
+
+<p align="center">
+  <a href="https://github.com/kabartay/tokenwatch/actions/workflows/ci.yml"><img src="https://github.com/kabartay/tokenwatch/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/kabartay/tokenwatch/releases/latest"><img src="https://img.shields.io/github/v/release/kabartay/tokenwatch?color=blue" alt="Release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/VS%20Code-%E2%89%A51.85-007ACC.svg?logo=visualstudiocode" alt="VS Code 1.85+"></a>
+  <a href="tsconfig.json"><img src="https://img.shields.io/badge/TypeScript-strict-3178C6.svg?logo=typescript&logoColor=white" alt="TypeScript strict"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/runtime%20deps-0-brightgreen.svg" alt="Zero runtime dependencies"></a>
+  <a href="#caveats"><img src="https://img.shields.io/badge/status-unofficial-orange.svg" alt="Unofficial"></a>
+</p>
 
 ```
-5h 42% · wk 18%
+5h 9% · wk 41%
 ```
 
-Hover for reset times, click to refresh. The item turns **amber** past your warning threshold
-and **red** at 100%.
+<p align="center">
+  <img src="docs/images/notification.png" width="560" alt="Notification: Tokenwatch: 5h 9% (resets in 4h 8m) · wk 41%">
+</p>
 
 ## Features
 
 - **Live session (5h) and weekly (7d) quota**, from the same source `/usage` reads.
-- **Reset countdowns** in the tooltip, for example "resets in 2h 13m".
+- **Reset countdowns**: hover for "resets in 4h 8m" on both windows.
+- **At-a-glance warnings**: the item turns **amber** at your threshold (80% by default) and
+  **red** at 100%.
 - **Zero setup.** Reuses your existing Claude Code login; nothing to paste, no API key.
-- **Graceful fallback.** If live numbers are unavailable, shows today's token count from your
-  local session logs instead of going stale or showing a wrong number.
-- **Light on your machine and the endpoint.** Unfocused windows skip polls, the log fallback
-  only reads newly appended bytes, and there are no runtime dependencies.
+- **Graceful fallback.** If live quota is unavailable, it shows today's token count from your
+  local session logs, and says why, instead of going stale or showing a wrong number.
+- **Light.** Unfocused windows skip polls, the fallback reads only newly written log bytes,
+  and there are no runtime dependencies.
 
 ## Install
 
 1. Download `tokenwatch-<version>.vsix` from the
    [latest release](https://github.com/kabartay/tokenwatch/releases/latest).
-2. Install it:
+2. In VS Code, open Extensions (`Cmd+Shift+X`), click **`···`** at the top right of the panel,
+   choose **Install from VSIX…**, and pick the file.
+3. Reload the window: `Cmd+Shift+P` → **Developer: Reload Window**.
 
-   ```bash
-   code --install-extension tokenwatch-*.vsix
-   ```
+From a terminal, run `code --install-extension tokenwatch-*.vsix`. With the `gh` CLI,
+`./install.sh` downloads and installs the latest release in one step. Updates aren't
+automatic, so repeat this for each release.
 
-   Or use **Extensions** → `…` → **Install from VSIX…**. If you have the `gh` CLI, `./install.sh`
-   downloads and installs the latest release in one step.
+## Usage
 
-> [!NOTE]
-> **macOS:** on first run, macOS asks whether VS Code may read the `Claude Code-credentials`
-> Keychain item. Choose **Always Allow** so you aren't asked on every poll.
-
-There is no auto-update: re-run the install for each new release.
-
-## Status bar states
+The item sits at the right end of the status bar and refreshes every 60 seconds.
 
 | Shows | Meaning |
 | --- | --- |
-| `5h 42% · wk 18%` | Live quota. Amber at the warning threshold, red at 100%. |
-| `~1.2M tok today` | Live quota unavailable; tokens logged locally today. The tooltip says why. |
+| `5h 9% · wk 41%` | Live quota: percentage used of the 5-hour session and of the week. |
+| `~1.2M tok today` | Live quota unavailable. Shows tokens logged locally today, and the tooltip says why. |
 | `Claude: log in` | No Claude Code login found. Run `claude` and log in. |
-| `Claude usage` (red) | Nothing worked; the tooltip has the error. |
+| `Claude usage` in red | Nothing worked. The tooltip has the error. |
+
+- **Hover** for both windows and their reset times.
+- **Click** to refresh now.
+- `Cmd+Shift+P` → **Tokenwatch: Refresh Claude Usage** refreshes and shows the result in a
+  notification, which helps if the item is out of view.
+- `Cmd+Shift+P` → **Tokenwatch: Show Log** shows what each refresh did.
 
 ## Configuration
 
 | Setting | Default | Description |
 | --- | --- | --- |
 | `tokenwatch.pollIntervalSeconds` | `60` | Seconds between refreshes (minimum 30). |
-| `tokenwatch.warnThresholdPercent` | `80` | Amber at or above this percentage. |
+| `tokenwatch.warnThresholdPercent` | `80` | Turn amber at or above this percentage. |
 
-Commands (`Cmd+Shift+P`):
-
-- **Tokenwatch: Refresh Claude Usage** refreshes now and shows the result in a notification.
-  Clicking the status bar item does the same without the notification.
-- **Tokenwatch: Show Log** opens the **Tokenwatch** output channel, which records each
-  refresh and why it fell back.
+Changes apply immediately, with no reload.
 
 ## How it works
 
+```mermaid
+flowchart LR
+  K["Claude Code login<br/><sub>Keychain · ~/.claude/.credentials.json</sub>"]
+  API["api.anthropic.com<br/><sub>/api/oauth/usage</sub>"]
+  LOGS["Local session logs<br/><sub>~/.claude/projects/**/*.jsonl</sub>"]
+  SB["Status bar<br/><sub>5h 9% · wk 41%</sub>"]
+
+  K -->|access token| API
+  API -->|five_hour · seven_day| SB
+  API -.->|on failure| LOGS
+  LOGS -.->|tokens today| SB
 ```
-CredentialStore ──token──▶ UsageApiClient ──snapshot──▶ UsageController ──state──▶ UsageStatusBar
- Keychain / file            GET /api/oauth/usage            │
-                                                            └─ on failure ─▶ LocalUsageEstimator
-                                                                             ~/.claude/projects/**/*.jsonl
-```
 
-1. **Credentials.** Reads the OAuth token Claude Code already stores: the macOS Keychain item
-   `Claude Code-credentials`, or `~/.claude/.credentials.json` on Linux and Windows. It's
-   re-read on every poll, so tokens Claude Code refreshes are picked up automatically.
-2. **Live quota.** Calls `https://api.anthropic.com/api/oauth/usage`, the endpoint behind
-   `/usage`, and reads the `five_hour` and `seven_day` utilization and reset times.
-3. **Fallback.** If that fails, sums today's input and output tokens from your local session
-   logs, de-duplicating streamed messages. This is consumption only, because plan limits are known
-   only to the server.
+On every poll, Tokenwatch:
 
-### Privacy
+1. **Reads your login.** It reads the OAuth token Claude Code already stores. The token is
+   re-read each time, so a token Claude Code refreshes is picked up without a reload.
+2. **Asks for your quota.** It calls the endpoint behind `/usage` and reads the 5-hour and
+   7-day utilization and reset times.
+3. **Falls back if that fails.** It sums today's tokens from your local Claude Code session
+   logs. That's consumption, not remaining quota, because only the server knows your plan's
+   limits. The tooltip says why live data was unavailable.
 
-Your token is held in memory for the duration of one request and sent **only** to
-`api.anthropic.com`. It is never logged, cached to disk, or sent anywhere else. The Tokenwatch
-log records only refresh outcomes and, when the endpoint's response isn't recognised, that
-response body (usage percentages and reset times). There are no runtime dependencies to audit. The whole extension is about 850 lines of documented TypeScript in
-[`src/`](src).
+The internals are explained in [Architecture](docs/ARCHITECTURE.md), and the endpoint
+details are in [Usage endpoint](docs/USAGE_ENDPOINT.md).
+
+## Privacy
+
+- Your access token is sent **only** to `api.anthropic.com`, over HTTPS.
+- It is never logged or written to disk, and a unit test checks that it never reaches the
+  log.
+- The fallback reads your local session logs for token counts only. Nothing else is
+  extracted from them, and nothing from them leaves your machine.
+- There's no telemetry and there are no runtime dependencies.
+
+The Tokenwatch log records refresh outcomes and error messages. If the endpoint's reply
+isn't recognised, the log also includes up to 1,000 characters of that reply.
+[SECURITY.md](SECURITY.md) lists exactly what is read, sent and logged.
 
 ## Caveats
 
 **Tokenwatch is unofficial and not affiliated with Anthropic.** It relies on an undocumented
-endpoint that can change or disappear without notice. If that happens, the status bar
-switches to the local-log fallback, and the tooltip says why.
+endpoint that can change or disappear without notice. If that happens, Tokenwatch switches
+to the local fallback, and the log records the response so it can be fixed quickly.
 
-## Troubleshooting
+## Documentation
 
-Start with **Tokenwatch: Show Log**, which says what the last refresh did.
-
-| Symptom | Fix |
+| | |
 | --- | --- |
-| Can't find the item | Right-click the status bar and make sure **Tokenwatch** is ticked. A crowded bar can push it out of view, but **Refresh Claude Usage** still reports the result in a notification. |
-| `Claude: log in` although you are logged in | macOS: allow Keychain access (see above). Elsewhere: check `~/.claude/.credentials.json` exists. |
-| Tooltip says *login rejected* | Your token expired. Run any `claude` command to refresh it, then click the item. |
-| Tooltip says *unrecognised response* | The endpoint changed shape. Please [open an issue](https://github.com/kabartay/tokenwatch/issues). |
-| Tooltip says *rate-limited* | Raise `tokenwatch.pollIntervalSeconds`. |
-
-## Development
-
-```bash
-npm install
-npm test          # compile + unit tests (node:test, no extra deps)
-npm run watch     # recompile on save
-```
-
-Press `F5` in VS Code to launch an Extension Development Host with the extension loaded.
-
-```
-src/
-├─ extension.ts         activate(): wires services together
-├─ core/                pure logic, no `vscode` import, unit-tested
-│  ├─ credentials.ts    TokenSource implementations + CredentialStore
-│  ├─ usageApi.ts       UsageApiClient + response parser
-│  ├─ localUsage.ts     incremental session-log estimator
-│  ├─ format.ts         percent / countdown / token formatting
-│  ├─ errors.ts, types.ts
-├─ vscode/              VS Code integration
-│  ├─ controller.ts     polling, focus handling, fallback orchestration
-│  ├─ statusBar.ts      renders a UsageState
-│  └─ config.ts         validated settings
-└─ test/                *.test.ts
-```
-
-### Releasing
-
-Bump `version` in `package.json`, then:
-
-```bash
-git tag v0.2.0 && git push origin v0.2.0
-```
-
-[`release.yml`](.github/workflows/release.yml) builds the `.vsix` and attaches it to a GitHub
-Release.
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Unexpected status, reading the log, Keychain access. |
+| [Usage endpoint](docs/USAGE_ENDPOINT.md) | Request, response and status codes, and what to do when it changes. |
+| [Architecture](docs/ARCHITECTURE.md) | Layers, the refresh decision, design decisions. |
+| [Development](docs/DEVELOPMENT.md) | Build, test, conventions and the release checklist. |
+| [Changelog](CHANGELOG.md) | What changed in each version. |
 
 ## License
 

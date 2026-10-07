@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p ./
+
+      # A manifest or source error that only surfaces at package time would otherwise
+      # ship silently until someone tries to install the .vsix from a tagged release.
+      - name: Package smoke test
+        run: npx @vscode/vsce package --out /tmp/smoke.vsix

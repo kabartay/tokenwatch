@@ -8,14 +8,14 @@ together and why they're shaped the way they are.
 
 ```
 src/
-├─ extension.ts      composition root: builds every object and wires the layers together
+├─ extension.ts      entry point: builds every object and wires the layers together
 ├─ domain/           pure rules and data: types, pace and alerts, formatting, parsing
 ├─ application/      use cases and ports: UsageService, RefreshPolicy, the interfaces they need
 ├─ infrastructure/   adapters to the outside world: HTTP, Keychain and file reads
 └─ ui/               VS Code: status bar, timers and events, settings
 ```
 
-Dependencies point inward only:
+Dependencies point inward:
 
 ```mermaid
 flowchart LR
@@ -32,12 +32,16 @@ flowchart LR
 | `domain/` | nothing outside itself | `application/`, `infrastructure/`, `ui/`, `vscode`, Node I/O modules |
 | `application/` | `domain/` | `infrastructure/`, `ui/`, `vscode`, Node I/O modules |
 | `infrastructure/` | `domain/`, `application/` (to implement its ports) | `ui/`, `vscode` |
-| `ui/` | `domain/`, `application/` | `infrastructure/` (it gets adapters through ports) |
+| `ui/` | `domain/`, `application/` | `infrastructure/` (it receives adapters through ports) |
 
-ESLint enforces every row (`eslint.config.ts`, `no-restricted-imports`), so an import across a
-boundary fails `npm run lint` and CI. The payoff is testing: everything in
-`domain/` and `application/` runs under plain `node --test` with in-memory fakes, no VS Code
-and no network.
+ESLint enforces every row (`no-restricted-imports` in `eslint.config.ts`), so an import that
+crosses a boundary fails `npm run lint` and CI. The payoff is testing: everything in `domain/`
+and `application/` runs under plain `node --test` with in-memory fakes, no VS Code and no
+network.
+
+`extension.ts` sits outside the layers because it is the one place that knows all of them.
+VS Code loads it (`"main": "./out/extension.js"`), and it constructs the infrastructure
+adapters and hands them to the application and UI objects.
 
 ```mermaid
 flowchart LR
@@ -67,28 +71,43 @@ flowchart LR
 | Module | Responsibility |
 | --- | --- |
 | `domain/types.ts` | Shared data: `UsageSnapshot`, `UsageState`, `ContextReading`, settings. |
-| `domain/usageResponse.ts` | Maps the endpoint's JSON onto a `UsageSnapshot`, tolerating renames. |
-| `domain/transcript.ts` | Parses transcript lines: context size of a reply, tokens of an entry, folder → directory name. |
-| `domain/contextWindow.ts` | Picks a model's context window (settings, prefix match, or 200k/1M inference). |
+| `domain/usageResponse.ts` | Maps the endpoint's JSON onto a `UsageSnapshot`, accepting a few plausible key renames. |
+| `domain/transcript.ts` | Parses transcript lines: a reply's context size, an entry's token count, folder → directory name. |
+| `domain/contextWindow.ts` | Picks a model's context window: from settings, by prefix, or by 200k/1M inference. |
 | `domain/insights.ts` | Progress bars, pace projection, alert level. |
 | `domain/format.ts` | Percentages, durations, `↻` countdowns, token counts, one-line summaries. |
-| `application/ports.ts` | Interfaces the use cases need: tokens, quota, estimates, context, storage, logging. |
-| `application/usageService.ts` | The refresh decision: live, fallback, or error; maps failures to backoff. |
-| `application/refreshPolicy.ts` | When a request may go out, what to show while it can't, and what survives a reload. |
+| `application/ports.ts` | Interfaces the use cases need: token, quota, local estimate, context, storage, logging. |
+| `application/usageService.ts` | The refresh decision (live, fallback or error) and the backoff a failure calls for. |
+| `application/refreshPolicy.ts` | Whether a request may go out, what to show while it can't, and what survives a reload. |
 | `application/errors.ts` | `UsageApiError`, the error contract of the quota port. |
-| `infrastructure/usageApiClient.ts` | HTTPS request, status codes, `Retry-After`. |
+| `infrastructure/usageApiClient.ts` | The HTTPS request, status codes and `Retry-After`. |
 | `infrastructure/credentials.ts` | Keychain and credentials-file token sources, tried in order. |
 | `infrastructure/localUsageEstimator.ts` | Incremental scan of today's session logs. |
 | `infrastructure/contextReader.ts` | Tail-reads the newest transcript for this window's folders. |
-| `ui/controller.ts` | Quota timer, focus gating, settings reload, manual refresh and notifications. |
-| `ui/contextMonitor.ts` | The 15 s context poll. |
+| `ui/controller.ts` | Quota timer, focus handling, settings reload, manual refresh and notifications. |
+| `ui/contextMonitor.ts` | The 15-second context poll. |
 | `ui/statusBar.ts` | Renders quota and context as one line, with colours and a Markdown tooltip. |
-| `ui/config.ts` | Reads and clamps `tokenwatch.*` settings. |
+| `ui/config.ts` | Reads and clamps the `tokenwatch.*` settings. |
+
+## Lifecycle
+
+1. **Activation.** VS Code activates Tokenwatch once startup has finished (`onStartupFinished`),
+   or earlier if one of its commands is run. `activate()` creates the log channel, the status
+   bar item and the objects above, and registers two commands: `tokenwatch.refresh` and
+   `tokenwatch.showLog`.
+2. **Restore.** `RefreshPolicy.restore()` loads the numbers and backoff saved before the last
+   reload, so the line appears at once (see [Design decisions](#design-decisions)).
+3. **Polling.** `UsageController` polls quota every `pollIntervalSeconds` (default 180) while the
+   window is focused and no backoff is running. `ContextMonitor` reads context every 15 seconds
+   while focused. Both repaint the same status bar item.
+4. **Settings changes** apply immediately: the timer is rescheduled and the item repainted.
+5. **Shutdown.** Everything is registered in `context.subscriptions`, so VS Code disposes the
+   timers, listeners and status bar item when the window closes.
 
 ## The refresh decision
 
-Every refresh produces exactly one `UsageState`, a discriminated union, so the status bar
-can't end up half-updated:
+Every quota refresh produces exactly one `UsageState`, a discriminated union, so the status
+bar can't end up half-updated:
 
 ```mermaid
 flowchart TD
@@ -100,104 +119,117 @@ flowchart TD
   E -->|nothing today| X["error (with reason)"]
 ```
 
-A missing login skips the fallback on purpose. Showing a token count would hide the one
+A missing login skips the fallback on purpose: showing a token count would hide the one
 problem the user can actually fix.
+
+`RefreshPolicy.record()` then decides what to display. On a rate limit it shows the last live
+snapshot instead, marked stale, if that snapshot is under 30 minutes old.
 
 ## Alert levels
 
-`assess()` in `domain/insights.ts` turns a snapshot into one of four levels. The status bar can
-only colour text and use two background colours, so each level maps onto one of these:
+`assess()` in `domain/insights.ts` gives the quota one of four levels. A status bar item can
+only change its text colour and use two background colours, so each level maps onto those:
 
 | Level | When | Shown as |
 | --- | --- | --- |
-| `ok` | Comfortable pace | Default colours |
-| `watch` | At this pace, a window runs out before it resets | Yellow text (`charts.yellow`) |
-| `warn` | A window is past the threshold, or will run out within the hour | Amber background, `$(warning)` |
+| `ok` | Comfortable pace | Default colours, `$(pulse)` |
+| `watch` | At this pace, a window runs out before it resets | Yellow text (`charts.yellow`), `$(pulse)` |
+| `warn` | A window is past `warnThresholdPercent`, or runs out within the hour | Amber background, `$(warning)` |
 | `critical` | A window is at 100% | Red background, `$(error)` |
 
+Context has its own two thresholds: yellow text from 70% and an amber background from 90%.
+Text colour and background are chosen separately, each from the quota when the quota sets it
+and from the context otherwise. So a nearly full context turns the item amber even when the
+quota is fine, but it never hides a quota warning.
+
 Pace is the average since the window started: `percentUsed / (now − (resetsAt − length))`.
-That needs no stored samples, so it is correct after a reload. It is suppressed in the
-first 10 minutes of a window, when a single large prompt would distort it.
+It needs no stored samples, so it is correct straight after a reload. It is suppressed for the
+first 10 minutes of a window, when one large prompt would distort it.
 
 ## Context size
 
-`ContextReader` finds this window's session transcripts in
-`~/.claude/projects/<folder with non-alphanumerics replaced by '->/` and takes the newest
-file. It reads from the end of the file (256 KB, then 4 MB if a long tool result is in the
-way) back to the last main-thread reply. That reply's
-`input_tokens + cache_creation_input_tokens + cache_read_input_tokens` is the context size
-`/context` reports. Subagent (`isSidechain`) replies are skipped because they have their own
-context. Entries aren't filtered by `cwd`, since a session keeps its context after Claude
-changes directory.
+`ContextReader` looks for transcripts in `~/.claude/projects/<folder>/`, where `<folder>` is
+the workspace folder path with every non-alphanumeric character replaced by `-`. It goes
+through them newest first and uses the first one that contains a reply. It reads from the end
+of the file (256 KB, then 4 MB if a long tool result is in the way) back to the last
+main-thread reply. That reply's `input_tokens + cache_creation_input_tokens +
+cache_read_input_tokens` is the context size `/context` reports.
 
-Transcripts record the model but not its window size, so `windowFor()` takes it from
-`tokenwatch.contextWindowTokens` (exact id, longest prefix, then `"*"`). Otherwise it infers
-200k, or 1M once the session has grown past 200k, which only a 1M window allows.
+- Subagent replies (`isSidechain`) are skipped, because they have their own context.
+- Entries aren't filtered by `cwd`: a session keeps its context after Claude changes directory.
+- Two folders whose paths differ only in punctuation map to the same directory name. This
+  collision is rare and accepted.
 
-Quota and context are polled independently — different sources, different rates (180s vs 15s)
-— but rendered as one line by `UsageStatusBar`: `ContextMonitor` has no status bar item of its
-own, it calls `statusBar.setContext(reading)` and `UsageStatusBar` repaints from whichever of
-quota or context was set most recently. Quota's alert colour always wins over context's,
-since quota (you're about to be rate-limited) is the more urgent signal.
+Transcripts record the model but not its window size, so `windowFor()` takes the size from
+`tokenwatch.contextWindowTokens` (exact model id, then the longest matching prefix, then `"*"`).
+Without a match it assumes 200k, or 1M once the session has grown past 200k, since only a 1M
+window allows that.
+
+Quota and context come from different sources and are polled at different rates: every
+3 minutes and every 15 seconds. `ContextMonitor` has no status bar item of its own. It calls
+`statusBar.setContext(reading)`, and `UsageStatusBar` repaints using the latest quota and the
+latest context.
 
 ## Design decisions
 
-**Credentials are re-read on every poll, never cached.** Claude Code refreshes its OAuth
-token in the background, and re-reading picks up the new one without a reload. Reading the
-Keychain costs a few milliseconds.
+**Credentials are re-read for every request, never cached.** Claude Code refreshes its OAuth
+token in the background, and re-reading picks up the new one without a reload.
 
-**`https.request`, not `fetch`.** VS Code patches Node's `https` module to honour the user's
-`http.proxy` setting. Global `fetch` isn't patched, so it would fail behind corporate proxies.
-The transport is still injectable (`UsageApiOptions.request`), which is how the tests run the
-client against a local HTTP server.
+**`https.request`, not `fetch`.** VS Code has long routed Node's `https` module through the
+user's `http.proxy` setting, while `fetch` only gained proxy support in later versions.
+`https.request` therefore works behind corporate proxies across the whole supported range
+(VS Code 1.85+). The transport is injectable (`UsageApiOptions.request`), which is how the
+tests run the client against a local HTTP server.
 
-**Unfocused windows skip polls.** Each VS Code window runs its own extension host, and so
-its own Tokenwatch. Polling only from the focused window keeps the endpoint load at roughly
-one request per interval, however many windows are open. A window that regains focus
-refreshes immediately if its data is older than the interval.
+**Unfocused windows skip polls.** Each VS Code window runs its own extension host, and so its
+own Tokenwatch. Polling only from the focused window keeps the load at about one request per
+interval however many windows are open. A window that regains focus refreshes at once if its
+numbers are older than the interval and no backoff is running.
 
-**Concurrent refreshes share one in-flight promise.** A click during a timer tick, or a
-focus event during a slow request, never sends a second request.
+**Concurrent refreshes share one in-flight request.** A click during a timer tick, or a focus
+event during a slow request, never sends a second request.
 
-**A 429 backs off, and the last good numbers stay on screen.** Polling every 60s drew a 429
-on roughly every other request in practice; the limit appears to be per account and shared with
-Claude Code itself, so the default interval is 180s. On a 429, `UsageApiClient` parses
-`Retry-After` (seconds, or an HTTP date) onto `UsageApiError`, and `UsageService` sets
-`retryAfterSeconds` to that value or 180s, whichever is longer. Honouring the header alone
-never engaged the backoff, because the server sends `Retry-After: 0`. `RefreshPolicy` then
-holds every poll until the backoff ends, including manual refreshes, which report the wait
-instead of drawing another 429. Meanwhile it keeps rendering the last live snapshot, if under
-30 minutes old, marked `staleReason: 'rate-limited'`, rather than switching to the local token
-count.
+**A 429 backs off, and the last good numbers stay on screen.** Polling every 60 seconds drew a
+429 on roughly every other request. The limit appears to be per account and shared with Claude
+Code itself, so the default interval is 180 seconds. On a 429, `UsageApiClient` reads
+`Retry-After` (seconds or an HTTP date) into `UsageApiError`, and `UsageService` sets the
+backoff to that value or 180 seconds, whichever is longer. The server sends
+`Retry-After: 0`, so honouring the header alone never backed off at all. While the backoff
+runs, `RefreshPolicy` holds every request, manual ones included; a manual refresh reports when
+the next attempt will be instead of drawing another 429.
 
 **The last numbers and the backoff survive a reload.** `RefreshPolicy` saves the last good
-response body, its fetch time and the backoff deadline through the `KeyValueStore` port
-(VS Code's `globalState` in production, an in-memory map in tests). On activation it
-restores them: the line appears at once, a running backoff isn't reset, and no request is
-sent while the saved numbers are newer than the poll interval. Before this, every reload sent
-a request immediately, which was the most common source of 429s.
+response body, its fetch time and the backoff deadline under the key `tokenwatch.lastQuota`,
+through the `KeyValueStore` port: VS Code's `globalState` in production, an in-memory map in
+tests. On activation it restores them. The line appears at once, a running backoff carries
+on, and no request is sent while the saved numbers are newer than the poll interval. Before
+this, every reload sent an immediate request, which often drew a 429.
 
 **The local fallback is incremental.** A single session log can exceed 100 MB, and one
 measured day touched 1.1 GB across 28 files. The estimator keeps a byte offset per file and
-reads only the appended tail. Measured on that day, the first scan took 2.2 s and later
-scans took about 40 ms. It skips lines without `"usage"` before calling `JSON.parse`, and it
-removes duplicate streamed messages using message id plus request id.
+reads only what has been appended since. On that day the first scan took 2.2 s and later scans
+about 40 ms. It skips lines without `"usage"` before calling `JSON.parse`, and counts a
+streamed message once, using its message id and request id.
 
-**The parser tolerates renames and keeps the raw body.** If the endpoint changes shape, the
-extension falls back and logs the body instead of displaying a wrong number. See
+**The parser tolerates renames and keeps the raw body.** If the endpoint changes shape,
+Tokenwatch falls back and logs the body rather than showing a wrong number. See
 [USAGE_ENDPOINT.md](USAGE_ENDPOINT.md).
 
-**No runtime dependencies.** The `.vsix` contains only the compiled `src/`. Anyone can audit
-what touches their credentials without reading a dependency tree.
+**The log reads like the status bar.** Each quota refresh, and each change in context, writes
+the same one line the status bar shows. Restore details are logged at Debug level only. The
+token never reaches the log; see [SECURITY.md](SECURITY.md).
+
+**No runtime dependencies.** The only code in the `.vsix` is the compiled `src/`, so anyone can
+audit what touches their credentials without reading a dependency tree.
 
 ## Extending
 
-- **New credential location:** implement `TokenSource` in `infrastructure/credentials.ts` and add it
-  to `CredentialStore.forPlatform`.
+- **New credential location:** implement `TokenSource` in `infrastructure/credentials.ts` and
+  add it to `CredentialStore.forPlatform`.
 - **New quota window** (for example a per-model weekly limit): add an optional field to
-  `UsageSnapshot` (`domain/types.ts`), parse it in `domain/usageResponse.ts`, and render it in
+  `UsageSnapshot` in `domain/types.ts`, parse it in `domain/usageResponse.ts`, and render it in
   `ui/statusBar.ts`.
-- **New data source** (say, another editor's logs): add a port to `application/ports.ts`,
+- **New data source** (say, another tool's logs): add a port to `application/ports.ts`,
   implement it in `infrastructure/`, and wire it in `extension.ts`. Nothing in `domain/` or
   `application/` needs to know where the data comes from.
 - **New status bar state:** add a variant to `UsageState`. TypeScript then flags every

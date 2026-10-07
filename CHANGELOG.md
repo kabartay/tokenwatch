@@ -6,6 +6,14 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Documentation revised against the code: a lifecycle section and the exact colour rules in
+  the architecture guide; a manual UI checklist, debugging notes and the dependency-update
+  workflow in the development guide; everything the log and extension storage can contain in
+  the security page; new symptoms (spinner, stale numbers, "next update in") in
+  troubleshooting; and how to query the endpoint yourself.
+
 ## [0.5.2] — 2026-10-07
 
 ### Changed

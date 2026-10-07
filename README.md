@@ -148,7 +148,7 @@ Your model probably has a 1M window. See [Recommended setting](#recommended-sett
 
 **No `ctx` at all?**
 It appears only for a Claude Code session started in a folder open in this window. See
-[Troubleshooting](docs/TROUBLESHOOTING.md#no-ctx--item).
+[Troubleshooting](docs/TROUBLESHOOTING.md#ctx-is-missing-from-the-line).
 
 Anything else, such as `~1.5M tok today` or rate limits, is covered in
 [Troubleshooting](docs/TROUBLESHOOTING.md).

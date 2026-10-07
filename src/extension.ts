@@ -37,7 +37,7 @@ export function activate(context: vscode.ExtensionContext): void {
     log,
   });
   const controller = new UsageController({ service, statusBar, log });
-  const contextMonitor = new ContextMonitor(new ContextReader(), log);
+  const contextMonitor = new ContextMonitor(new ContextReader(), statusBar, log);
 
   context.subscriptions.push(
     log,
@@ -45,7 +45,7 @@ export function activate(context: vscode.ExtensionContext): void {
     controller,
     contextMonitor,
     vscode.commands.registerCommand(REFRESH_COMMAND, (args?: RefreshArgs) =>
-      controller.refreshManually(!args?.quiet),
+      Promise.all([controller.refreshManually(!args?.quiet), contextMonitor.refresh()]),
     ),
     vscode.commands.registerCommand(SHOW_LOG_COMMAND, () => log.show()),
   );

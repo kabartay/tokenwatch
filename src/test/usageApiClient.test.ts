@@ -72,6 +72,43 @@ describe('UsageApiClient.fetchUsage', () => {
     assert.ok(!err.message.includes('tok'), 'token is not echoed into the error');
   });
 
+  it('reads a numeric Retry-After header on a 429', async () => {
+    respond = (res) => {
+      res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': '42' });
+      res.end('{"error":"rate limited"}');
+    };
+    const err = await client().fetchUsage('tok').then(
+      () => assert.fail('expected rejection'),
+      (e: unknown) => e,
+    );
+    assert.ok(err instanceof UsageApiError);
+    assert.ok(err.isRateLimited);
+    assert.equal(err.retryAfterSeconds, 42);
+  });
+
+  it('reads an HTTP-date Retry-After header as seconds from now', async () => {
+    respond = (res) => {
+      res.writeHead(429, { 'Retry-After': new Date(Date.now() + 90_000).toUTCString() });
+      res.end('{}');
+    };
+    const err = await client().fetchUsage('tok').then(
+      () => assert.fail('expected rejection'),
+      (e: unknown) => e,
+    );
+    assert.ok(err instanceof UsageApiError);
+    assert.ok(err.retryAfterSeconds !== undefined && Math.abs(err.retryAfterSeconds - 90) <= 2);
+  });
+
+  it('has no retryAfterSeconds when the header is absent', async () => {
+    respond = json(429, '{}');
+    const err = await client().fetchUsage('tok').then(
+      () => assert.fail('expected rejection'),
+      (e: unknown) => e,
+    );
+    assert.ok(err instanceof UsageApiError);
+    assert.equal(err.retryAfterSeconds, undefined);
+  });
+
   it('rejects invalid JSON', async () => {
     respond = json(200, '<html>maintenance</html>');
     await assert.rejects(client().fetchUsage('tok'), /not valid JSON/);

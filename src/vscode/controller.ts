@@ -32,6 +32,8 @@ export class UsageController implements vscode.Disposable {
   private timer: ReturnType<typeof setInterval> | undefined;
   private inFlight: Promise<void> | undefined;
   private lastRefreshAt = 0;
+  /** Epoch ms before which scheduled polls are skipped, set after a 429. */
+  private backoffUntil = 0;
   private readonly subscriptions: vscode.Disposable[] = [];
 
   constructor(private readonly deps: UsageControllerDeps) {
@@ -40,7 +42,7 @@ export class UsageController implements vscode.Disposable {
         if (e.affectsConfiguration(CONFIG_SECTION)) this.applyConfig();
       }),
       vscode.window.onDidChangeWindowState((s) => {
-        if (s.focused && this.isStale()) void this.refresh();
+        if (s.focused && this.isStale() && this.isPastBackoff()) void this.refresh();
       }),
     );
   }
@@ -97,8 +99,17 @@ export class UsageController implements vscode.Disposable {
       state = { kind: 'error', message: err instanceof Error ? err.message : String(err) };
     }
     this.deps.log.info(summarizeState(state));
+    this.applyBackoff(state);
     this.state = state;
     this.deps.statusBar.render(state, this.config);
+  }
+
+  /** Pushes out the next scheduled poll after a rate limit, instead of retrying on cadence. */
+  private applyBackoff(state: UsageState): void {
+    const retryAfterSeconds = (state.kind === 'fallback' || state.kind === 'error') && state.retryAfterSeconds;
+    if (!retryAfterSeconds) return;
+    this.backoffUntil = Date.now() + retryAfterSeconds * 1_000;
+    this.deps.log.info(`Backing off polling for ${retryAfterSeconds}s after a rate limit`);
   }
 
   private applyConfig(): void {
@@ -110,11 +121,15 @@ export class UsageController implements vscode.Disposable {
   private schedule(): void {
     if (this.timer) clearInterval(this.timer);
     this.timer = setInterval(() => {
-      if (vscode.window.state.focused) void this.refresh();
+      if (vscode.window.state.focused && this.isPastBackoff()) void this.refresh();
     }, this.config.pollIntervalSeconds * 1_000);
   }
 
   private isStale(): boolean {
     return Date.now() - this.lastRefreshAt >= this.config.pollIntervalSeconds * 1_000;
+  }
+
+  private isPastBackoff(): boolean {
+    return Date.now() >= this.backoffUntil;
   }
 }

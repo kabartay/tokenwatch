@@ -6,6 +6,12 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- A 429 from the usage endpoint no longer retries on the normal poll interval, which could
+  draw another 429 immediately. It now backs off, honouring a `Retry-After` header when the
+  server sends one and otherwise waiting 180s. Manual refreshes are unaffected.
+
 ### Added
 
 - Mini progress bars in the status bar: `5h ▰▱▱▱▱ 9% · wk ▰▰▱▱▱ 41%`.
@@ -14,9 +20,9 @@ All notable changes to Tokenwatch. The format follows
 - Pace-aware warnings: yellow text when a window will run out before it resets, amber when
   that's under an hour away.
 - Settings `tokenwatch.statusBarStyle` (`bars` or `compact`) and `tokenwatch.showResetCountdown`.
-- Context size item, `ctx ▰▰▱▱▱ 29%`: how full the context window is in the latest Claude Code
-  session started in this window's folder, read from its transcript every 15 s. The tooltip
-  shows "291k of 1M tokens", the model and the time of the last reply.
+- Context size, `· ctx: 29%` appended to the quota line: how full the context window is in
+  the latest Claude Code session started in this window's folder, read from its transcript
+  every 15 s. The tooltip adds "291k of 1M tokens", the model and the time of the last reply.
 - Setting `tokenwatch.contextWindowTokens`: context window size per model (exact id, prefix
   or `"*"`), with 200k/1M inference for unlisted models. Setting `tokenwatch.showContext`.
 

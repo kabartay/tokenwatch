@@ -2,7 +2,7 @@
   "name": "tokenwatch",
   "displayName": "Tokenwatch",
   "description": "Claude Code session and weekly usage quota, live in the VS Code status bar.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "kabartay",
   "private": true,
   "license": "MIT",
@@ -38,6 +38,12 @@
         "title": "Refresh Claude Usage",
         "category": "Tokenwatch",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "tokenwatch.showLog",
+        "title": "Show Log",
+        "category": "Tokenwatch",
+        "icon": "$(output)"
       }
     ],
     "configuration": {

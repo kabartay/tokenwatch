@@ -4,7 +4,36 @@
 
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-import { formatPercent, formatTimeUntil, formatTokens } from '../core/format';
+import { formatPercent, formatTimeUntil, formatTokens, summarizeState } from '../core/format';
+
+describe('summarizeState', () => {
+  const now = new Date('2026-10-07T12:00:00Z');
+
+  it('summarises live quota with the session reset', () => {
+    const text = summarizeState(
+      {
+        kind: 'live',
+        fetchedAt: now,
+        snapshot: {
+          raw: {},
+          session: { percentUsed: 42, resetsAt: new Date('2026-10-07T14:13:00Z') },
+          weekly: { percentUsed: 18 },
+        },
+      },
+      now,
+    );
+    assert.equal(text, '5h 42% (resets in 2h 13m) · wk 18%');
+  });
+
+  it('names the reason when falling back', () => {
+    const text = summarizeState({
+      kind: 'fallback',
+      reason: 'HTTP 500',
+      estimate: { tokensToday: 1_250_000, messageCount: 3 },
+    });
+    assert.equal(text, 'live quota unavailable (HTTP 500); ~1.3M tokens today');
+  });
+});
 
 describe('formatPercent', () => {
   it('rounds and handles unknown', () => {

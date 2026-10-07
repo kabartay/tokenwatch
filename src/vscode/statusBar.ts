@@ -10,15 +10,15 @@ import type { TokenwatchConfig, UsageSnapshot, UsageState, UsageWindow } from '.
 export class UsageStatusBar implements vscode.Disposable {
   private readonly item: vscode.StatusBarItem;
 
-  /** @param refreshCommand - Command run when the item is clicked. */
-  constructor(refreshCommand: string) {
+  /** @param clickCommand - Command run when the item is clicked. */
+  constructor(clickCommand: vscode.Command) {
     this.item = vscode.window.createStatusBarItem(
       'tokenwatch.usage',
       vscode.StatusBarAlignment.Right,
       100,
     );
     this.item.name = 'Tokenwatch';
-    this.item.command = refreshCommand;
+    this.item.command = clickCommand;
     this.render({ kind: 'loading' }, { pollIntervalSeconds: 60, warnThresholdPercent: 80 });
     this.item.show();
   }

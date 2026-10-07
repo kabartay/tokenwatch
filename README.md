@@ -63,7 +63,12 @@ There is no auto-update: re-run the install for each new release.
 | `tokenwatch.pollIntervalSeconds` | `60` | Seconds between refreshes (minimum 30). |
 | `tokenwatch.warnThresholdPercent` | `80` | Amber at or above this percentage. |
 
-Command palette: **Tokenwatch: Refresh Claude Usage**.
+Commands (`Cmd+Shift+P`):
+
+- **Tokenwatch: Refresh Claude Usage** refreshes now and shows the result in a notification.
+  Clicking the status bar item does the same without the notification.
+- **Tokenwatch: Show Log** opens the **Tokenwatch** output channel, which records each
+  refresh and why it fell back.
 
 ## How it works
 
@@ -86,8 +91,9 @@ CredentialStore ──token──▶ UsageApiClient ──snapshot──▶ Usag
 ### Privacy
 
 Your token is held in memory for the duration of one request and sent **only** to
-`api.anthropic.com`. Nothing is logged, cached to disk, or sent anywhere else, and there are no
-runtime dependencies to audit. The whole extension is about 850 lines of documented TypeScript in
+`api.anthropic.com`. It is never logged, cached to disk, or sent anywhere else. The Tokenwatch
+log records only refresh outcomes and, when the endpoint's response isn't recognised, that
+response body (usage percentages and reset times). There are no runtime dependencies to audit. The whole extension is about 850 lines of documented TypeScript in
 [`src/`](src).
 
 ## Caveats
@@ -98,8 +104,11 @@ switches to the local-log fallback, and the tooltip says why.
 
 ## Troubleshooting
 
+Start with **Tokenwatch: Show Log**, which says what the last refresh did.
+
 | Symptom | Fix |
 | --- | --- |
+| Can't find the item | Right-click the status bar and make sure **Tokenwatch** is ticked. A crowded bar can push it out of view, but **Refresh Claude Usage** still reports the result in a notification. |
 | `Claude: log in` although you are logged in | macOS: allow Keychain access (see above). Elsewhere: check `~/.claude/.credentials.json` exists. |
 | Tooltip says *login rejected* | Your token expired. Run any `claude` command to refresh it, then click the item. |
 | Tooltip says *unrecognised response* | The endpoint changed shape. Please [open an issue](https://github.com/kabartay/tokenwatch/issues). |

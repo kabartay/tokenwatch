@@ -9,24 +9,38 @@ import { UsageApiClient } from './core/usageApi';
 import { UsageController } from './vscode/controller';
 import { UsageStatusBar } from './vscode/statusBar';
 
-/** Command id contributed in `package.json`. */
+/** Command ids contributed in `package.json`. */
 export const REFRESH_COMMAND = 'tokenwatch.refresh';
+export const SHOW_LOG_COMMAND = 'tokenwatch.showLog';
+
+/** Arguments the status bar passes to {@link REFRESH_COMMAND}; the palette passes none. */
+interface RefreshArgs {
+  /** Skip the result notification (the status bar already shows the outcome). */
+  readonly quiet?: boolean;
+}
 
 /** Called by VS Code once startup has finished (`onStartupFinished`). */
 export function activate(context: vscode.ExtensionContext): void {
-  const statusBar = new UsageStatusBar(REFRESH_COMMAND);
+  const log = vscode.window.createOutputChannel('Tokenwatch', { log: true });
+  const statusBar = new UsageStatusBar({ command: REFRESH_COMMAND, title: 'Refresh', arguments: [{ quiet: true }] });
   const controller = new UsageController({
     credentials: CredentialStore.forPlatform(),
     api: new UsageApiClient(),
     localEstimator: new LocalUsageEstimator(),
     statusBar,
+    log,
   });
 
   context.subscriptions.push(
+    log,
     statusBar,
     controller,
-    vscode.commands.registerCommand(REFRESH_COMMAND, () => controller.refresh()),
+    vscode.commands.registerCommand(REFRESH_COMMAND, (args?: RefreshArgs) =>
+      controller.refreshManually(!args?.quiet),
+    ),
+    vscode.commands.registerCommand(SHOW_LOG_COMMAND, () => log.show()),
   );
+  log.info(`Tokenwatch ${String(context.extension.packageJSON.version)} activated`);
   controller.start();
 }
 

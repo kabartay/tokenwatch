@@ -1,6 +1,31 @@
 /**
- * @file Pure presentation helpers shared by the status bar and its tooltip.
+ * @file Pure presentation helpers shared by the status bar, its tooltip and notifications.
  */
+
+import type { UsageState } from './types';
+
+/**
+ * Summarises a state in one line, for notifications and the log.
+ *
+ * @returns For example `"5h 42% (resets in 2h 13m) · wk 18%"`.
+ */
+export function summarizeState(state: UsageState, now: Date = new Date()): string {
+  switch (state.kind) {
+    case 'loading':
+      return 'fetching usage…';
+    case 'noCredentials':
+      return 'no Claude Code login found';
+    case 'live': {
+      const { session, weekly } = state.snapshot;
+      const reset = session?.resetsAt ? ` (resets ${formatTimeUntil(session.resetsAt, now)})` : '';
+      return `5h ${formatPercent(session?.percentUsed)}${reset} · wk ${formatPercent(weekly?.percentUsed)}`;
+    }
+    case 'fallback':
+      return `live quota unavailable (${state.reason}); ~${formatTokens(state.estimate.tokensToday)} tokens today`;
+    case 'error':
+      return `error: ${state.message}`;
+  }
+}
 
 /**
  * Formats a percentage for the status bar.

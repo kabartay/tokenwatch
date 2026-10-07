@@ -34,7 +34,8 @@ export class KeychainTokenSource implements TokenSource {
       execFile(
         'security',
         ['find-generic-password', '-s', this.service, '-w'],
-        { timeout: 5_000 },
+        // Long enough for the user to answer a macOS Keychain access prompt.
+        { timeout: 60_000 },
         (err, stdout) => resolve(err ? undefined : stdout.trim() || undefined),
       );
     });

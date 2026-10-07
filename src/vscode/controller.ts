@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import type { CredentialStore } from '../core/credentials';
 import { UsageApiError } from '../core/errors';
 import type { LocalUsageEstimator } from '../core/localUsage';
+import { summarizeState } from '../core/format';
 import { hasAnyWindow, type UsageApiClient } from '../core/usageApi';
 import type { TokenwatchConfig, UsageState } from '../core/types';
 import { CONFIG_SECTION, readConfig } from './config';
@@ -17,6 +18,8 @@ export interface UsageControllerDeps {
   readonly api: UsageApiClient;
   readonly localEstimator: LocalUsageEstimator;
   readonly statusBar: UsageStatusBar;
+  /** Diagnostics sink; never receives the access token. */
+  readonly log: vscode.LogOutputChannel;
 }
 
 /**
@@ -64,26 +67,49 @@ export class UsageController implements vscode.Disposable {
     return this.inFlight;
   }
 
+  /**
+   * Refreshes on explicit user request and shows the spinner while it runs.
+   *
+   * @param notify - Also report the outcome in a notification, so the palette command
+   *   visibly does something even when the status bar item is out of view.
+   */
+  async refreshManually(notify: boolean): Promise<void> {
+    this.deps.statusBar.render({ kind: 'loading' }, this.config);
+    await this.refresh();
+    if (!notify) return;
+    const message = `Tokenwatch: ${summarizeState(this.state)}`;
+    const show = this.state.kind === 'live' ? vscode.window.showInformationMessage : vscode.window.showWarningMessage;
+    if ((await show(message, 'Show Log')) === 'Show Log') this.deps.log.show();
+  }
+
   dispose(): void {
     if (this.timer) clearInterval(this.timer);
     vscode.Disposable.from(...this.subscriptions).dispose();
   }
 
   private async doRefresh(): Promise<void> {
-    this.setState(await this.computeState());
+    const state = await this.computeState();
+    this.deps.log.info(summarizeState(state));
+    this.setState(state);
   }
 
   private async computeState(): Promise<UsageState> {
+    const { log } = this.deps;
     const token = await this.deps.credentials.getAccessToken();
-    if (!token) return { kind: 'noCredentials' };
+    if (!token) {
+      log.warn('No access token in the macOS Keychain or ~/.claude/.credentials.json');
+      return { kind: 'noCredentials' };
+    }
 
     let reason: string;
     try {
       const snapshot = await this.deps.api.fetchUsage(token);
       if (hasAnyWindow(snapshot)) return { kind: 'live', snapshot, fetchedAt: new Date() };
       reason = 'usage endpoint returned an unrecognised response';
+      log.warn(`Unrecognised usage response: ${JSON.stringify(snapshot.raw).slice(0, 1_000)}`);
     } catch (err) {
       reason = describeFailure(err);
+      log.warn(`Usage request failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     const estimate = await this.deps.localEstimator.estimateToday();

@@ -87,6 +87,7 @@
     "@types/vscode": "~1.85.0",
     "@vscode/vsce": "^2.24.0",
     "eslint": "^9.39.5",
+    "jiti": "^2.7.0",
     "typescript": "^5.4.0",
     "typescript-eslint": "^8.71.1"
   }

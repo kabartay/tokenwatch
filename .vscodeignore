@@ -8,7 +8,7 @@ out/test/**
 node_modules/**
 .editorconfig
 .gitignore
-eslint.config.mjs
+eslint.config.ts
 tsconfig.json
 install.sh
 SECURITY.md

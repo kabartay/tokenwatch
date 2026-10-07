@@ -1,4 +1,4 @@
-// @ts-check
+// Loaded by ESLint through jiti, which is why jiti is a dev dependency.
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
@@ -28,7 +28,8 @@ export default tseslint.config(
     },
   },
   {
-    files: ['eslint.config.mjs'],
+    // Outside tsconfig's rootDir (src/), so lint it without type information.
+    files: ['eslint.config.ts'],
     extends: [tseslint.configs.disableTypeChecked],
   },
 );

@@ -25,10 +25,10 @@
 
 | Part | Means |
 | --- | --- |
-| `5h ▰▱▱▱▱ 19%` | 19% of your rolling 5-hour session quota is used. |
-| `↻2h 35m` | The 5-hour session resets in 2 hours 35 minutes. |
-| `wk ▰▰▱▱▱ 43%` | 43% of your weekly quota is used. |
-| `ctx: 47%` | The Claude Code session in this folder has filled 47% of its context window, as `/context` reports. |
+| `5h ▰▱▱▱▱ 19%` | 19% of the 5-hour session quota used |
+| `↻2h 35m` | the 5-hour session resets in 2 h 35 min |
+| `wk ▰▰▱▱▱ 43%` | 43% of the weekly quota used |
+| `ctx: 47%` | this folder's Claude Code session has filled 47% of its context window, as `/context` shows |
 
 Hover over it for the details: both quota windows with their reset times and a pace forecast
 ("~45% at reset", or "runs out in 1h 20m"), plus the context's token count and model.
@@ -82,15 +82,15 @@ The item sits at the right end of the status bar.
 | Colour | When |
 | --- | --- |
 | Default | Comfortable pace. |
-| Yellow text | At this pace, a quota window runs out before it resets; or context is past 70%. |
-| Amber background | A quota window is past your threshold (80%) or runs out within the hour; or context is past 90%. |
-| Red background | A quota window is used up. |
+| Yellow text | At this pace, a quota window runs out before it resets; or context is past 70%. |
+| Amber background | A quota window is past your threshold (80%) or runs out within the hour; or context is past 90%. |
+| Red background | A quota window is used up. |
 
-| Other states | Meaning |
+| Other states | Meaning |
 | --- | --- |
-| `~1.5M tok today` | Live quota is unavailable and there are no recent numbers to show, so it counts today's tokens from local logs instead. The tooltip says why. |
-| `Claude: log in` | No Claude Code login found. Run `claude` and log in. |
-| `Claude usage` in red | Nothing worked. The tooltip has the error. |
+| `~1.5M tok today` | Live quota is unavailable and there are no recent numbers to show, so it counts today's tokens from local logs instead. The tooltip says why. |
+| `Claude: log in` | No Claude Code login found. Run `claude` and log in. |
+| `Claude usage` in red | Nothing worked. The tooltip has the error. |
 
 ## Configuration
 

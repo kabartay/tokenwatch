@@ -6,6 +6,14 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+## [1.0.2] — 2026-10-08
+
+### Changed
+
+- The Marketplace description now mentions the pace forecast and context %, not just the quota.
+- The README's Marketplace badge is now a static link; shields.io retired its Marketplace badges,
+  which showed "retired badge" on the listing. No change in behaviour.
+
 ## [1.0.1] — 2026-10-08
 
 ### Changed
@@ -185,7 +193,8 @@ behaviour means a new major version.
 
 - Initial release.
 
-[Unreleased]: https://github.com/kabartay/tokenwatchclaude/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/kabartay/tokenwatchclaude/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/kabartay/tokenwatchclaude/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/kabartay/tokenwatchclaude/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/kabartay/tokenwatchclaude/compare/v0.5.3...v1.0.0
 [0.5.3]: https://github.com/kabartay/tokenwatchclaude/compare/v0.5.2...v0.5.3

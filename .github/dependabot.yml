@@ -15,6 +15,9 @@ updates:
     # @types/vscode must match engines.vscode, or the build can use APIs older VS Code lacks.
     ignore:
       - dependency-name: '@types/vscode'
+      # A TypeScript major has to be supported by typescript-eslint first; 7.0 failed Jobwatch's build.
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
     groups:
       dev-dependencies:
         dependency-type: development

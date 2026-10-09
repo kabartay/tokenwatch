@@ -9,6 +9,10 @@ authors:
     email: mukharbek.organokov@gmail.com
     orcid: "https://orcid.org/0000-0002-3093-3456"
 repository-code: "https://github.com/kabartay/tokenwatchclaude"
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23267879
+    description: The concept DOI, which always resolves to the newest version.
 url: "https://marketplace.visualstudio.com/items?itemName=kabartay.tokenwatchclaude"
 abstract: >-
   A Visual Studio Code extension that shows Claude Code's usage limits in the

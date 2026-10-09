@@ -6,6 +6,14 @@ All notable changes to Tokenwatch. The format follows
 
 ## [Unreleased]
 
+## [1.0.3] — 2026-10-09
+
+### Added
+
+- Archived on Zenodo with a DOI, so the extension can be cited. `CITATION.cff` and
+  `.zenodo.json` carry the metadata; neither is shipped in the extension package. No change
+  in behaviour.
+
 ## [1.0.2] — 2026-10-08
 
 ### Changed
@@ -193,7 +201,8 @@ behaviour means a new major version.
 
 - Initial release.
 
-[Unreleased]: https://github.com/kabartay/tokenwatchclaude/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/kabartay/tokenwatchclaude/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/kabartay/tokenwatchclaude/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/kabartay/tokenwatchclaude/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/kabartay/tokenwatchclaude/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/kabartay/tokenwatchclaude/compare/v0.5.3...v1.0.0

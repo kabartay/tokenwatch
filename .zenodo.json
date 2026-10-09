@@ -1,0 +1,29 @@
+{
+  "upload_type": "software",
+  "title": "Tokenwatch for Claude Code: a VS Code extension showing Claude Code quota and context live in the status bar",
+  "description": "<p>A Visual Studio Code extension that shows Claude Code's usage limits in the status bar: the 5-hour and weekly quota, a countdown to each reset, a pace forecast and the fill of the current session's context window.</p><p>It reuses the login Claude Code already stores, talks only to Anthropic's own usage endpoint, backs off under that endpoint's tight shared rate limit, and keeps the last good numbers on screen. Written in strict TypeScript with a clean architecture whose layer boundaries are enforced by lint, with no runtime dependencies and no telemetry.</p><p>Unofficial; not affiliated with Anthropic. MIT licence.</p>",
+  "creators": [
+    {
+      "name": "Organokov, Mukharbek",
+      "orcid": "0000-0002-3093-3456"
+    }
+  ],
+  "license": "mit",
+  "access_right": "open",
+  "version": "1.0.3",
+  "keywords": [
+    "Claude Code",
+    "Visual Studio Code extension",
+    "developer tools",
+    "usage monitoring",
+    "TypeScript"
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isSupplementedBy",
+      "identifier": "https://marketplace.visualstudio.com/items?itemName=kabartay.tokenwatchclaude",
+      "scheme": "url",
+      "resource_type": "software"
+    }
+  ]
+}

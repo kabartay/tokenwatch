@@ -13,3 +13,5 @@ tsconfig.json
 scripts/**
 *.vsix
 CLAUDE.md
+CITATION.cff
+.zenodo.json

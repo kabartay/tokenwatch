@@ -2,7 +2,7 @@
   "name": "tokenwatchclaude",
   "displayName": "Tokenwatch for Claude Code",
   "description": "Claude Code quota and context in your status bar: 5-hour and weekly usage, reset countdowns, pace forecast and ctx %.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "kabartay",
   "icon": "images/icon.png",
   "galleryBanner": {
